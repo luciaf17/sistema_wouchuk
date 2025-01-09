@@ -1,7 +1,8 @@
 from django.db import models
+from utils.audit import AuditModel  # Importa el modelo base desde utils
 
 # Modelo para Productos
-class Producto(models.Model):
+class Producto(AuditModel):
     barcode = models.TextField(null=True, blank=True)  # Código de barras (puede repetirse)
     descripcion = models.TextField()  # Descripción del producto
     loc_dep = models.ForeignKey('stock.Deposito', on_delete=models.SET_NULL, null=True, blank=True)  # Depósito

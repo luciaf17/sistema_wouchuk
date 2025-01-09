@@ -1,4 +1,5 @@
 from django.db import models
+from utils.audit import AuditModel  # Importa el modelo base desde utils
 
 # Modelo para Paises
 class Pais(models.Model):
@@ -39,7 +40,7 @@ class TipoRemito(models.Model):
 
 
 # Estados de Remitos: ENUM que clasifica los estados (ej. Abierto, Cerrado)
-class EstadoRemito(models.Model):
+class EstadoRemito(AuditModel):
     descripcion = models.TextField()
 
     def __str__(self):
@@ -47,7 +48,7 @@ class EstadoRemito(models.Model):
 
 
 # Modelo principal de Remitos
-class Remito(models.Model):
+class Remito(AuditModel):
     tipo_remito = models.ForeignKey(TipoRemito, on_delete=models.SET_NULL, null=True, blank=True)  # Tipo de remito
     cliente = models.ForeignKey('clientes.Cliente', on_delete=models.SET_NULL, null=True, blank=True)  # Cliente relacionado
     dep_origen = models.ForeignKey('stock.Deposito', on_delete=models.SET_NULL, null=True, blank=True, related_name='remitos_origen')  # Depósito origen
@@ -61,7 +62,7 @@ class Remito(models.Model):
 
 
 # Detalles del Remito: Define los productos asociados a un remito
-class DetalleRemito(models.Model):
+class DetalleRemito(AuditModel):
     remito = models.ForeignKey(Remito, on_delete=models.CASCADE)  # Remito relacionado
     producto = models.ForeignKey('productos.Producto', on_delete=models.CASCADE)  # Producto relacionado
     cantidad = models.PositiveIntegerField()  # Cantidad de producto en el remito

@@ -1,4 +1,5 @@
 from django.db import models
+from utils.audit import AuditModel  # Importa el modelo base desde utils
 
 # Modelo para Depósitos
 class Deposito(models.Model):
@@ -34,7 +35,7 @@ class Estante(models.Model):
 
 
 # Modelo para Stock
-class Stock(models.Model):
+class Stock(AuditModel):
     producto = models.ForeignKey('productos.Producto', on_delete=models.CASCADE)  # Producto relacionado
     deposito = models.ForeignKey(Deposito, on_delete=models.CASCADE)  # Depósito relacionado
     cantidad = models.PositiveIntegerField()  # Cantidad disponible
