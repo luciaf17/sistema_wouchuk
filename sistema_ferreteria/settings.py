@@ -68,7 +68,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'utils.middleware.CurrentUserMiddleware',  # Ajusta la ruta según la ubicación del middleware
+    "utils.middleware.CurrentUserMiddleware",  # Ajusta la ruta según la ubicación del middleware
+    'utils.middleware.LoginRequiredMiddleware',
 ]
 
 # URL a la que redirigir después de iniciar sesión

@@ -70,6 +70,24 @@ nav {
     height: 100vh; /* Asegura que ocupe todo el alto de la ventana */
 }
 
+.nav-link.active {
+    color: #98c21d; /* Verde Wouchuk */
+    font-weight: bold;
+    background-color: #333333; /* Fondo gris oscuro */
+    border-left: 4px solid #98c21d; /* Indicador visual en el lado izquierdo */
+}
+
+
+/* Ajuste para los submenús colapsados */
+.collapse:not(.show) {
+    display: none; /* Ocultar los submenús cerrados */
+}
+
+.collapse.show {
+    display: block; /* Mostrar los submenús abiertos */
+}
+
+
 /* Cambiar el color al pasar el mouse */
 .nav-link:hover {
     color: #98c21d; /* Verde Wouchuk */

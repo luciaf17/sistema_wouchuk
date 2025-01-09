@@ -1,4 +1,6 @@
 from threading import local
+from django.shortcuts import redirect
+from django.conf import settings
 
 _user = local()
 
@@ -15,3 +17,17 @@ class CurrentUserMiddleware:
         response = self.get_response(request)
         _user.value = None
         return response
+    
+class LoginRequiredMiddleware:
+    """
+    Middleware para requerir login en todas las vistas.
+    Excluye URLs configuradas en `LOGIN_EXEMPT_URLS`.
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        login_exempt_urls = ['/login/', '/logout/']  # Agrega más URLs si es necesario
+        if not request.user.is_authenticated and request.path not in login_exempt_urls:
+            return redirect(settings.LOGIN_URL)
+        return self.get_response(request)

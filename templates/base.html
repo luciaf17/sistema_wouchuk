@@ -15,34 +15,49 @@
         <nav class="bg-dark text-white p-3 d-flex flex-column align-items-start" style="min-width: 200px; height: 100vh;">
             <img src="{% static 'wouchuk-logo.png' %}" alt="Wouchuk Logo" class="img-fluid mb-3 sidebar-logo">
             <ul class="nav flex-column w-100">
+                <!-- Inicio -->
                 <li class="nav-item">
                     <a class="nav-link text-white" href="#">Inicio</a>
                 </li>
+        
+                <!-- Clientes -->
                 <li class="nav-item">
-                    <a class="nav-link text-white" data-bs-toggle="collapse" data-bs-target="#clientesSubmenu" role="button">
+                    <a class="nav-link text-white {% if 'clientes' in request.path %}active{% endif %}" 
+                       data-bs-toggle="collapse" 
+                       data-bs-target="#clientesSubmenu" 
+                       role="button" 
+                       aria-expanded="{% if 'clientes' in request.path %}true{% else %}false{% endif %}">
                         Clientes
                     </a>
-                    <div class="collapse" id="clientesSubmenu">
+                    <div class="collapse {% if 'clientes' in request.path %}show{% endif %}" id="clientesSubmenu">
                         <ul class="nav flex-column ps-3">
-                            <li><a class="nav-link text-white" href="#">ABM</a></li>
+                            <li><a class="nav-link text-white {% if 'tipodocumento' in request.path %}active{% endif %}" href="{% url 'tipodocumento_list' %}">Tipos de Documentos</a></li>
                             <li><a class="nav-link text-white" href="#">Consultas</a></li>
                         </ul>
                     </div>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white" data-bs-toggle="collapse" data-bs-target="#productosSubmenu" role="button">
+                    <a class="nav-link text-white {% if 'productos' in request.path %}active{% endif %}" 
+                       data-bs-toggle="collapse" 
+                       data-bs-target="#productosSubmenu" 
+                       role="button" 
+                       aria-expanded="{% if 'productos' in request.path %}true{% else %}false{% endif %}">
                         Productos
                     </a>
-                    <div class="collapse" id="productosSubmenu">
+                    <div class="collapse {% if 'productos' in request.path %}show{% endif %}" id="productosSubmenu">
                         <ul class="nav flex-column ps-3">
                             <li><a class="nav-link text-white" href="#">ABM</a></li>
                             <li><a class="nav-link text-white" href="#">Consultas</a></li>
                         </ul>
                     </div>
                 </li>
+        
+                <!-- Cambiar Contraseña -->
                 <li class="nav-item">
                     <a class="nav-link text-white" href="{% url 'password_change' %}">Cambiar Contraseña</a>
                 </li>
+        
+                <!-- Cerrar Sesión -->
                 <li class="nav-item mt-auto">
                     <form action="{% url 'logout' %}" method="post" class="m-0 p-0">
                         {% csrf_token %}
@@ -50,7 +65,7 @@
                     </form>
                 </li>
             </ul>
-        </nav>               
+        </nav>        
 
         <!-- Contenido Principal -->
         <main class="p-4 w-100">
