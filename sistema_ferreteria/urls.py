@@ -17,7 +17,25 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
+from django.contrib.auth import views as auth_views
+from clientes.views import home
+
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+
+    # URL para el login
+    path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
+
+    # URL para el logout
+    path('logout/', auth_views.LogoutView.as_view(template_name='logout.html'), name='logout'),
+
+    path('', home, name='home'),
+
+    path('password_change/', auth_views.PasswordChangeView.as_view(template_name='password_change.html'), name='password_change'),
+    
+    path('password_change/done/', auth_views.PasswordChangeDoneView.as_view(template_name='password_change_done.html'), name='password_change_done'),
+
+
 ]

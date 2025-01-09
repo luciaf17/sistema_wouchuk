@@ -12,9 +12,18 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import environ
+import os
 
-env = environ.Env()
-environ.Env.read_env()
+# Define la ruta base del proyecto
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Inicializa django-environ
+env = environ.Env(
+    DEBUG=(bool, False)
+)
+
+# Lee el archivo .env
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,13 +47,18 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 # Application definition
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'clientes',
+    'productos',
+    'remitos',
+    'stock',
 ]
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -56,19 +70,29 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# URL a la que redirigir después de iniciar sesión
+LOGIN_REDIRECT_URL = '/'
+
+# URL a la que redirigir después de cerrar sesión
+LOGOUT_REDIRECT_URL = '/login/'
+
+# URL para el login
+LOGIN_URL = '/login/'
+
+
 ROOT_URLCONF = "sistema_ferreteria.urls"
 
 TEMPLATES = [
     {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
-        "APP_DIRS": True,
-        "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'templates'],  # Asegúrate de incluir esta línea
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
             ],
         },
     },
@@ -117,12 +141,15 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+# Idioma predeterminado
+LANGUAGE_CODE = 'es'
 
-TIME_ZONE = "UTC"
+# Zona horaria
+TIME_ZONE = 'America/Argentina/Buenos_Aires'
 
+# Activar la internacionalización
 USE_I18N = True
-
+USE_L10N = True
 USE_TZ = True
 
 

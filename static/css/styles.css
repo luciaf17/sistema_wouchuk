@@ -1,0 +1,155 @@
+/* Fondo con degradado */
+.bg-gradient {
+    background: linear-gradient(135deg, #98c21d, #333333); /* Verde Wouchuk a gris oscuro */
+    color: white;
+}
+
+/* Estilo para la tarjeta de login */
+.login-card {
+    border-radius: 10px;
+    max-width: 400px;
+    background: white;
+}
+
+/* Sombra suave */
+.login-card {
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Botón con colores de la marca */
+.btn-success {
+    background-color: #98c21d;
+    border: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-success:hover {
+    background-color: #7fa91b;
+    transform: translateY(-2px); /* Efecto de movimiento al pasar el mouse */
+}
+
+/* Estilo para inputs */
+.form-control-lg {
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    transition: border-color 0.3s ease;
+}
+
+.form-control-lg:focus {
+    border-color: #98c21d; /* Verde Wouchuk */
+    box-shadow: 0px 0px 5px rgba(152, 194, 29, 0.5);
+}
+
+/* Labels visibles y estilizados */
+.form-label {
+    font-weight: bold;
+    color: #333333; /* Gris oscuro */
+}
+
+/* Texto de bienvenida */
+.text-primary {
+    color: #98c21d !important; /* Verde Wouchuk */
+}
+
+/* Texto secundario */
+.text-muted {
+    color: #666666 !important;
+}
+
+/* Ajuste del logo en la barra lateral */
+.sidebar-logo {
+    max-width: 150px; /* Máximo ancho permitido para el logo */
+    max-height: 100px; /* Máximo alto permitido */
+    object-fit: contain; /* Asegura que el logo no se deforme */
+    margin-bottom: 20px; /* Espacio debajo del logo */
+}
+
+/* Barra lateral fija y con scroll si es necesario */
+nav {
+    overflow-y: auto; /* Permite desplazarse si el contenido excede el alto */
+    height: 100vh; /* Asegura que ocupe todo el alto de la ventana */
+}
+
+/* Cambiar el color al pasar el mouse */
+.nav-link:hover {
+    color: #98c21d; /* Verde Wouchuk */
+    background-color: #444444; /* Un gris oscuro para el fondo */
+    transition: color 0.3s ease, background-color 0.3s ease; /* Transición suave */
+}
+
+/* Cambiar el color del elemento activo */
+.nav-link.active {
+    color: #98c21d; /* Verde Wouchuk */
+    font-weight: bold;
+    background-color: #333333; /* Gris oscuro para destacar */
+}
+
+
+/* Fondo con degradado para la barra */
+.bg-dark {
+    background: linear-gradient(180deg, #000000, #333333); /* Negro a gris oscuro */
+}
+
+/* Efecto hover para el logo */
+.sidebar-logo:hover {
+    transform: scale(1.1); /* Aumenta ligeramente el tamaño */
+    transition: transform 0.3s ease; /* Transición suave */
+}
+
+/* Fondo con degradado */
+.bg-gradient {
+    background: linear-gradient(135deg, #98c21d, #333333); /* Verde Wouchuk a gris oscuro */
+    color: white;
+}
+
+/* Estilo para la tarjeta del formulario */
+.card {
+    border-radius: 10px;
+    background-color: #ffffff;
+}
+
+/* Sombra suave */
+.card {
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Botón estilizado */
+.btn-success {
+    background-color: #98c21d;
+    border: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-success:hover {
+    background-color: #7fa91b;
+    transform: translateY(-2px); /* Movimiento al pasar el mouse */
+}
+
+/* Inputs estilizados */
+.form-control-lg {
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control-lg:focus {
+    border-color: #98c21d; /* Verde Wouchuk */
+    box-shadow: 0px 0px 5px rgba(152, 194, 29, 0.5);
+}
+
+/* Labels */
+.form-label {
+    color: #333333;
+    font-weight: bold;
+}
+
+/* Texto de ayuda */
+.text-muted {
+    font-size: 0.9rem;
+    color: #666666;
+}
+
+/* Listas de validación */
+.list-unstyled li {
+    margin-bottom: 5px;
+}
