@@ -31,11 +31,46 @@
                     </a>
                     <div class="collapse {% if 'clientes' in request.path %}show{% endif %}" id="clientesSubmenu">
                         <ul class="nav flex-column ps-3">
-                            <li><a class="nav-link text-white {% if 'tipodocumento' in request.path %}active{% endif %}" href="{% url 'tipodocumento_list' %}">Tipos de Documentos</a></li>
-                            <li><a class="nav-link text-white" href="#">Consultas</a></li>
+                            <!-- ABM -->
+                            <li>
+                                <a class="nav-link text-white" href="#">ABM</a>
+                                <ul class="nav flex-column ps-3">
+                                    <li>
+                                        <a class="nav-link text-white {% if 'tipodocumento' in request.path %}active{% endif %}" href="{% url 'tipodocumento_list' %}">Tipos de Documentos</a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-white {% if 'categoriaarca' in request.path %}active{% endif %}" href="{% url 'categoriaarca_list' %}">Categoría Arca</a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-white {% if 'rubro' in request.path %}active{% endif %}" href="{% url 'rubro_list' %}">Rubros</a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-white {% if 'departamento' in request.path %}active{% endif %}" href="{% url 'departamento_list' %}">Departamentos</a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-white {% if 'tipocliente' in request.path %}active{% endif %}" href="{% url 'tipocliente_list' %}">Tipo Cliente</a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-white {% if 'pais' in request.path %}active{% endif %}" href="{% url 'pais_list' %}">Paises</a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-white {% if 'provincia' in request.path %}active{% endif %}" href="{% url 'provincia_list' %}">Provincias</a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-white {% if 'localidad' in request.path %}active{% endif %}" href="{% url 'localidad_list' %}">Localidades</a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link text-white {% if 'cliente_list' in request.path %}active{% endif %}" href="{% url 'cliente_list' %}">
+                                            Clientes
+                                        </a>                                        
+                                    </li>
+                                </ul>
+                            </li>
                         </ul>
                     </div>
                 </li>
+                
+                <!-- Productos -->
                 <li class="nav-item">
                     <a class="nav-link text-white {% if 'productos' in request.path %}active{% endif %}" 
                        data-bs-toggle="collapse" 

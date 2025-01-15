@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2 class="mb-4">{% if object %}Editar Tipo de Documento{% else %}Crear Tipo de Documento{% endif %}</h2>
+    <h2>Crear/Editar Localidad</h2>
     <form method="post" class="needs-validation">
         {% csrf_token %}
         
@@ -10,7 +10,6 @@
             <label for="id_descripcion" class="form-label">Descripción</label>
             {{ form.descripcion }}
             
-            <!-- Mostrar errores -->
             {% if form.descripcion.errors %}
                 <div class="text-danger mt-1">
                     {{ form.descripcion.errors.0 }}
@@ -18,8 +17,18 @@
             {% endif %}
         </div>
 
+        <div class="mb-3">
+            <label for="id_cp" class="form-label">Código Postal</label>
+            {{ form.cp }}
+        </div>
+
+        <div class="mb-3">
+            <label for="id_provincia" class="form-label">Provincia</label>
+            {{ form.provincia }}
+        </div>
+
         <button type="submit" class="btn btn-success">Guardar</button>
-        <a href="{% url 'tipodocumento_list' %}" class="btn btn-secondary">Cancelar</a>
+        <a href="{% url 'localidad_list' %}" class="btn btn-secondary">Cancelar</a>
     </form>
 </div>
 {% endblock %}

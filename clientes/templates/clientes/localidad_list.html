@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Localidades</h2>
+    <form method="get" class="d-flex mb-4">
+        <input type="text" name="q" class="form-control me-2" placeholder="Buscar por descripción" value="{{ request.GET.q }}">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+    </form>
+    <a href="{% url 'localidad_create' %}" class="btn btn-success mb-3">Crear Nuevo</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Descripción</th>
+                <th>Código Postal</th>
+                <th>Provincia</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for localidad in localidades %}
+            <tr>
+                <td>{{ localidad.id }}</td>
+                <td>{{ localidad.descripcion }}</td>
+                <td>{{ localidad.cp }}</td>
+                <td>{{ localidad.provincia.descripcion }}</td>
+                <td>
+                    <a href="{% url 'localidad_update' localidad.id %}" class="btn btn-warning btn-sm">Editar</a>
+                    <a href="{% url 'localidad_delete' localidad.id %}" class="btn btn-danger btn-sm">Eliminar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">No se encontraron localidades</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

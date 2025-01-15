@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if cliente.id %}Editar Cliente{% else %}Crear Cliente{% endif %}</h2>
+    <form method="post" class="needs-validation">
+        {% csrf_token %}
+        
+        <!-- Campos del cliente -->
+        <div class="mb-3">
+            <label for="id_descripcion" class="form-label">Descripción</label>
+            {{ form.descripcion }}
+            {% if form.descripcion.errors %}
+                <div class="text-danger mt-1">
+                    {{ form.descripcion.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="id_fantasia" class="form-label">Fantasia</label>
+            {{ form.fantasia }}
+            {% if form.fantasia.errors %}
+                <div class="text-danger mt-1">
+                    {{ form.fantasia.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="id_cat_arca" class="form-label">Categoría Arca</label>
+            {{ form.cat_arca }}
+            {% if form.cat_arca.errors %}
+                <div class="text-danger mt-1">
+                    {{ form.cat_arca.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="id_tipo_doc" class="form-label">Tipo Documento</label>
+            {{ form.tipo_doc }}
+            {% if form.tipo_doc.errors %}
+                <div class="text-danger mt-1">
+                    {{ form.tipo_doc.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="id_nro_doc" class="form-label">Número de Documento</label>
+            {{ form.nro_doc }}
+            {% if form.nro_doc.errors %}
+                <div class="text-danger mt-1">
+                    {{ form.nro_doc.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="id_direccion" class="form-label">Dirección</label>
+            {{ form.direccion }}
+            {% if form.direccion.errors %}
+                <div class="text-danger mt-1">
+                    {{ form.direccion.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="id_localidad" class="form-label">Localidad</label>
+            {{ form.localidad }}
+            {% if form.localidad.errors %}
+                <div class="text-danger mt-1">
+                    {{ form.localidad.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label for="id_rubro" class="form-label">Rubro</label>
+            {{ form.rubro }}
+            {% if form.rubro.errors %}
+                <div class="text-danger mt-1">
+                    {{ form.rubro.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Tipos de Cliente -->
+        <h3 class="mt-4">Tipos de Cliente</h3>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Tipo Cliente</th>
+                    <th>Principal</th>
+                    <th>Eliminar</th>
+                </tr>
+            </thead>
+            <tbody id="tipos-cliente-body">
+                {% for tipo_cliente in cliente_tipos %}
+                <tr>
+                    <td>
+                        {{ tipo_cliente.tipo_cliente.descripcion }}
+                        <input type="hidden" name="tipos_cliente" value="{{ tipo_cliente.tipo_cliente.id }}">
+                    </td>
+                    <td>
+                        <input type="radio" name="tipo_principal" value="{{ tipo_cliente.tipo_cliente.id }}" {% if tipo_cliente.principal %}checked{% endif %}>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm btn-remove-tipo">Eliminar</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr id="no-tipos-cliente">
+                    <td colspan="3" class="text-center">No se encontraron tipos de cliente.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="mb-3">
+            <label for="add-tipo-cliente" class="form-label">Agregar Tipo Cliente</label>
+            <select id="add-tipo-cliente" class="form-select">
+                <option value="">Seleccionar Tipo de Cliente</option>
+                {% for tipo in tipos_cliente %}
+                    <option value="{{ tipo.id }}">{{ tipo.descripcion }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" id="btn-add-tipo-cliente" class="btn btn-primary mt-2">Agregar</button>
+        </div>
+
+        <!-- Botones -->
+        <button type="submit" class="btn btn-success">Guardar</button>
+        <a href="{% url 'cliente_list' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+<script>
+    // Agregar tipo cliente dinámicamente
+    document.getElementById('btn-add-tipo-cliente').addEventListener('click', function () {
+        const select = document.getElementById('add-tipo-cliente');
+        const tipoClienteId = select.value;
+        const tipoClienteText = select.options[select.selectedIndex].text;
+
+        if (!tipoClienteId) return;
+
+        const tbody = document.getElementById('tipos-cliente-body');
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+            <td>
+                ${tipoClienteText}
+                <input type="hidden" name="tipos_cliente" value="${tipoClienteId}">
+            </td>
+            <td>
+                <input type="radio" name="tipo_principal" value="${tipoClienteId}">
+            </td>
+            <td>
+                <button type="button" class="btn btn-danger btn-sm btn-remove-tipo">Eliminar</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+
+        // Limpiar selección
+        select.value = '';
+        document.getElementById('no-tipos-cliente')?.remove();
+    });
+
+    // Eliminar tipo cliente dinámicamente
+    document.getElementById('tipos-cliente-body').addEventListener('click', function (e) {
+        if (e.target.classList.contains('btn-remove-tipo')) {
+            e.target.closest('tr').remove();
+
+            const tbody = document.getElementById('tipos-cliente-body');
+            if (!tbody.querySelector('tr')) {
+                tbody.innerHTML = `<tr id="no-tipos-cliente"><td colspan="3" class="text-center">No se encontraron tipos de cliente.</td></tr>`;
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Tipos de Cliente</h2>
+    <form method="get" class="d-flex mb-4">
+        <input type="text" name="q" class="form-control me-2" placeholder="Buscar por descripción" value="{{ request.GET.q }}">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+    </form>
+    <a href="{% url 'tipocliente_create' %}" class="btn btn-success mb-3">Crear Nuevo</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Descripción</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tipocliente in tipoclientes %}
+            <tr>
+                <td>{{ tipocliente.id }}</td>
+                <td>{{ tipocliente.descripcion }}</td>
+                <td>
+                    <a href="{% url 'tipocliente_update' tipocliente.id %}" class="btn btn-warning btn-sm">Editar</a>
+                    <a href="{% url 'tipocliente_delete' tipocliente.id %}" class="btn btn-danger btn-sm">Eliminar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="text-center">No se encontraron tipos de cliente</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

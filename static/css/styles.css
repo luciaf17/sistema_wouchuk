@@ -77,17 +77,6 @@ nav {
     border-left: 4px solid #98c21d; /* Indicador visual en el lado izquierdo */
 }
 
-
-/* Ajuste para los submenús colapsados */
-.collapse:not(.show) {
-    display: none; /* Ocultar los submenús cerrados */
-}
-
-.collapse.show {
-    display: block; /* Mostrar los submenús abiertos */
-}
-
-
 /* Cambiar el color al pasar el mouse */
 .nav-link:hover {
     color: #98c21d; /* Verde Wouchuk */

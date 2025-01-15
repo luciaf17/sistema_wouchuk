@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Contactos de {{ cliente.descripcion }}</h2>
+<a href="{% url 'contacto_create' cliente.id %}" class="btn btn-success mb-3">Crear Nuevo Contacto</a>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Departamento</th>
+            <th>Teléfono</th>
+            <th>Email</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for contacto in contactos %}
+        <tr>
+            <td>{{ contacto.nombre_y_apellido }}</td>
+            <td>{{ contacto.departamento }}</td>
+            <td>{{ contacto.telefono }}</td>
+            <td>{{ contacto.email }}</td>
+            <td>
+                <a href="{% url 'contacto_update' contacto.id %}" class="btn btn-warning btn-sm">Editar</a>
+                <a href="{% url 'contacto_delete' contacto.id %}" class="btn btn-danger btn-sm">Eliminar</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" class="text-center">No se encontraron contactos.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

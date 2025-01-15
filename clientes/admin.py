@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Cliente, Contacto, TipoDocumento, CategoriaArca, Rubro, TipoCliente, ClienteTipo
+from .models import Pais, Provincia, Localidad, Cliente, Contacto, TipoDocumento, CategoriaArca, Rubro, TipoCliente, ClienteTipo, Departamento
 
 
 @admin.register(Cliente)
@@ -31,3 +31,7 @@ admin.site.register(TipoDocumento)
 admin.site.register(CategoriaArca)
 admin.site.register(Rubro)
 admin.site.register(TipoCliente)
+admin.site.register(Departamento) 
+admin.site.register(Pais)
+admin.site.register(Provincia)
+admin.site.register(Localidad)

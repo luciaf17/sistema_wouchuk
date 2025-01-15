@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Rubros</h2>
+    <form method="get" class="d-flex mb-4">
+        <input type="text" name="q" class="form-control me-2" placeholder="Buscar por descripción" value="{{ request.GET.q }}">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+    </form>
+    <a href="{% url 'rubro_create' %}" class="btn btn-success mb-3">Crear Nuevo</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Descripción</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rubro in rubros %}
+            <tr>
+                <td>{{ rubro.id }}</td>
+                <td>{{ rubro.descripcion }}</td>
+                <td>
+                    <a href="{% url 'rubro_update' rubro.id %}" class="btn btn-warning btn-sm">Editar</a>
+                    <a href="{% url 'rubro_delete' rubro.id %}" class="btn btn-danger btn-sm">Eliminar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="text-center">No se encontraron resultados</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

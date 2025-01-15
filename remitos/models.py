@@ -1,36 +1,6 @@
 from django.db import models
 from utils.audit import AuditModel  # Importa el modelo base desde utils
 
-# Modelo para Paises
-class Pais(models.Model):
-    descripcion = models.TextField()  # Nombre del país
-    cod_tel = models.TextField(null=True, blank=True)  # Código telefónico
-    gtm = models.TextField(null=True, blank=True)  # Zona horaria
-
-    def __str__(self):
-        return self.descripcion
-
-
-# Modelo para Provincias
-class Provincia(models.Model):
-    descripcion = models.TextField()  # Nombre de la provincia
-    pais = models.ForeignKey(Pais, on_delete=models.CASCADE)  # Relación con Pais
-
-    def __str__(self):
-        return self.descripcion
-
-
-# Modelo para Localidades
-class Localidad(models.Model):
-    descripcion = models.TextField()  # Nombre de la localidad
-    cp = models.TextField()  # Código postal
-    pais = models.ForeignKey(Pais, on_delete=models.CASCADE)  # Relación con Pais
-    provincia = models.ForeignKey(Provincia, on_delete=models.CASCADE)  # Relación con Provincia
-
-    def __str__(self):
-        return self.descripcion
-
-
 # Tipos de Remitos: ENUM que clasifica los remitos (ej. Compra, Venta)
 class TipoRemito(models.Model):
     descripcion = models.TextField()

@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Listado de Clientes</h2>
+
+    <!-- Botón para crear un nuevo cliente -->
+    <div class="mb-3">
+        <a href="{% url 'cliente_create' %}" class="btn btn-success">Crear Nuevo Cliente</a>
+    </div>
+
+    <!-- Formulario de búsqueda -->
+    <form method="get" class="mb-3">
+        <div class="row">
+            <div class="col-md-6">
+                <input type="text" name="q" class="form-control" placeholder="Buscar por descripción" value="{{ request.GET.q }}">
+            </div>
+            <div class="col-md-4">
+                <select name="tipo_cliente" class="form-control">
+                    <option value="">Buscar por Tipo Cliente Principal</option>
+                    {% for tipo in tipos_cliente %}
+                    <option value="{{ tipo.id }}" {% if request.GET.tipo_cliente == tipo.id|stringformat:"s" %}selected{% endif %}>
+                        {{ tipo.descripcion }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Buscar</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Tabla de clientes -->
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Descripción</th>
+                <th>Tipos de Cliente</th>
+                <th>Principal</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cliente in clientes %}
+            <tr>
+                <td>{{ cliente.id }}</td>
+                <td>{{ cliente.descripcion }}</td>
+                <td>
+                    {% for tipo in cliente.tipos.all %}
+                        {{ tipo.tipo_cliente.descripcion }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </td>
+                <td>{{ cliente.get_tipo_principal }}</td>
+                <td>
+                    <a href="{% url 'cliente_update' cliente.id %}" class="btn btn-warning btn-sm">Editar</a>
+                    <a href="{% url 'cliente_delete' cliente.id %}" class="btn btn-danger btn-sm">Eliminar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">No se encontraron clientes</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
