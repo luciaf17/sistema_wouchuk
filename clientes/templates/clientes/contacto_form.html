@@ -1,11 +1,15 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>{{ view.action|default:"Crear/Editar" }} Contacto</h2>
-<form method="post" class="needs-validation">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-success">Guardar</button>
-    <a href="{% url 'contacto_list' cliente.id %}" class="btn btn-secondary">Cancelar</a>
-</form>
+<div class="container mt-4">
+    <h2>{% if object.id %}Editar Contacto{% else %}Crear Nuevo Contacto{% endif %}</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <button type="submit" class="btn btn-success">Guardar</button>
+        <a href="{% url 'contacto_list' cliente_id %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
 {% endblock %}

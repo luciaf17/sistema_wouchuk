@@ -360,6 +360,13 @@ class ContactoListView(ListView):
         cliente_id = self.kwargs.get('cliente_id')
         return Contacto.objects.filter(cliente_id=cliente_id)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        cliente_id = self.kwargs.get('cliente_id')
+        context['cliente'] = Cliente.objects.get(id=cliente_id)
+        return context
+
+
 class ContactoCreateView(CreateView):
     model = Contacto
     form_class = ContactoForm
@@ -374,6 +381,12 @@ class ContactoCreateView(CreateView):
         initial['cliente'] = cliente_id
         return initial
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['cliente_id'] = self.kwargs.get('cliente_id')
+        return context
+
+
 class ContactoUpdateView(UpdateView):
     model = Contacto
     form_class = ContactoForm
@@ -381,6 +394,11 @@ class ContactoUpdateView(UpdateView):
 
     def get_success_url(self):
         return reverse_lazy('contacto_list', kwargs={'cliente_id': self.object.cliente.id})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['cliente_id'] = self.object.cliente.id
+        return context
 
 class ContactoDeleteView(DeleteView):
     model = Contacto
