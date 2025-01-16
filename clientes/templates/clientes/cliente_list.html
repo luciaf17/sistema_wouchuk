@@ -17,14 +17,14 @@
             </div>
             <div class="col-md-4">
                 <select name="tipo_cliente" class="form-control">
-                    <option value="">Buscar por Tipo Cliente Principal</option>
+                    <option value="">Buscar por Tipo de Cliente Asociado</option>
                     {% for tipo in tipos_cliente %}
                     <option value="{{ tipo.id }}" {% if request.GET.tipo_cliente == tipo.id|stringformat:"s" %}selected{% endif %}>
                         {{ tipo.descripcion }}
                     </option>
                     {% endfor %}
                 </select>
-            </div>
+            </div>            
             <div class="col-md-2">
                 <button type="submit" class="btn btn-primary w-100">Buscar</button>
             </div>

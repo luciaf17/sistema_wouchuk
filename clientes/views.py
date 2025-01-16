@@ -259,17 +259,18 @@ class ClienteListView(ListView):
     context_object_name = 'clientes'
 
     def get_queryset(self):
-        query = self.request.GET.get('q')
+        queryset = Cliente.objects.all()
+        q = self.request.GET.get('q')
         tipo_cliente = self.request.GET.get('tipo_cliente')
-        clientes = Cliente.objects.all()
 
-        if query:
-            clientes = clientes.filter(descripcion__icontains=query)
+        if q:
+            queryset = queryset.filter(descripcion__icontains=q)
 
         if tipo_cliente:
-            clientes = clientes.filter(tipos__tipo_cliente_id=tipo_cliente, tipos__principal=True)
+            # Filtrar por clientes que tengan el tipo de cliente especificado
+            queryset = queryset.filter(tipos__tipo_cliente_id=tipo_cliente)
 
-        return clientes.distinct()
+        return queryset.distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

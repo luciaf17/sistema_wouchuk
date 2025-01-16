@@ -27,6 +27,12 @@ urlpatterns = [
 
     path('clientes/', include('clientes.urls')),  # Incluye las URLs de la app "clientes"
 
+    path('stock/', include('stock.urls')),
+
+    path('productos/', include('productos.urls')),
+
+    #path('remitos/', include('remitos.urls')),
+
     # URL para el login
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
 
