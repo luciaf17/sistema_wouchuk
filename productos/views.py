@@ -12,6 +12,27 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 
 @csrf_exempt
+def buscar_producto(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        query = data.get('query', '').strip()
+
+        if query:
+            # Filtra productos por descripción o código de barras (barcode)
+            productos = Producto.objects.filter(
+                models.Q(descripcion__icontains=query) | models.Q(barcode__icontains=query)
+            )[:10]  # Limitar resultados a 10 para evitar sobrecarga
+
+            resultado = [
+                {'barcode': p.barcode, 'descripcion': p.descripcion}
+                for p in productos
+            ]
+            return JsonResponse({'productos': resultado})
+
+        return JsonResponse({'productos': []})
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+@csrf_exempt
 def buscar_google(request):
     if request.method == 'POST':
         data = json.loads(request.body)

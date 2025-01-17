@@ -1,42 +1,35 @@
 from django.db import models
-from utils.audit import AuditModel  # Importa el modelo base desde utils
-
-# Tipos de Remitos: ENUM que clasifica los remitos (ej. Compra, Venta)
-class TipoRemito(models.Model):
-    descripcion = models.TextField()
-
-    def __str__(self):
-        return self.descripcion
+from utils.audit import AuditModel
+from stock.models import Deposito
+from clientes.models import Cliente
 
 
-# Estados de Remitos: ENUM que clasifica los estados (ej. Abierto, Cerrado)
-class EstadoRemito(AuditModel):
-    descripcion = models.TextField()
-
-    def __str__(self):
-        return self.descripcion
-
-
-# Modelo principal de Remitos
 class Remito(AuditModel):
-    tipo_remito = models.ForeignKey(TipoRemito, on_delete=models.SET_NULL, null=True, blank=True)  # Tipo de remito
-    cliente = models.ForeignKey('clientes.Cliente', on_delete=models.SET_NULL, null=True, blank=True)  # Cliente relacionado
-    dep_origen = models.ForeignKey('stock.Deposito', on_delete=models.SET_NULL, null=True, blank=True, related_name='remitos_origen')  # Depósito origen
-    dep_destino = models.ForeignKey('stock.Deposito', on_delete=models.SET_NULL, null=True, blank=True, related_name='remitos_destino')  # Depósito destino
-    nro_comprobante_asoc = models.TextField(null=True, blank=True)  # Número de comprobante asociado
-    fecha = models.DateTimeField(auto_now_add=True)  # Fecha del remito
-    estado_remito = models.ForeignKey(EstadoRemito, on_delete=models.SET_NULL, null=True, blank=True)  # Estado del remito
+    tipo_remito = models.CharField(max_length=50, choices=[
+        ('ajuste', 'Ajuste'),
+        ('compra', 'Compra'),
+        ('venta', 'Venta'),
+        ('interdeposito', 'Interdepósito'),
+    ])
+    cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True)
+    dep_origen = models.ForeignKey(Deposito, on_delete=models.SET_NULL, null=True, blank=True, related_name='remitos_origen')
+    dep_destino = models.ForeignKey(Deposito, on_delete=models.SET_NULL, null=True, blank=True, related_name='remitos_destino')
+    nro_comprobante_asoc = models.TextField(null=True, blank=True)
+    fecha = models.DateTimeField(auto_now_add=True)
+    estado_remito = models.CharField(max_length=50, choices=[
+        ('activo', 'Activo'),
+        ('anulado', 'Anulado'),
+    ], default='activo')
 
     def __str__(self):
         return f"{self.tipo_remito} - {self.fecha}"
 
 
-# Detalles del Remito: Define los productos asociados a un remito
 class DetalleRemito(AuditModel):
-    remito = models.ForeignKey(Remito, on_delete=models.CASCADE)  # Remito relacionado
-    producto = models.ForeignKey('productos.Producto', on_delete=models.CASCADE)  # Producto relacionado
-    cantidad = models.PositiveIntegerField()  # Cantidad de producto en el remito
-    precio_unit = models.DecimalField(max_digits=10, decimal_places=2)  # Precio unitario
+    remito = models.ForeignKey(Remito, on_delete=models.CASCADE, verbose_name="Remito")
+    producto = models.ForeignKey('productos.Producto', on_delete=models.CASCADE, verbose_name="Producto")
+    cantidad = models.PositiveIntegerField(verbose_name="Cantidad")
+    precio_unit = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Precio Unitario")
 
     def __str__(self):
         return f"{self.remito} - {self.producto} - {self.cantidad}"

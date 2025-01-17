@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Listado de Remitos</h2>
+    <a href="{% url 'remito_create' %}" class="btn btn-success mb-3">Crear Nuevo Remito</a>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Cliente</th>
+                <th>Depósito Origen</th>
+                <th>Depósito Destino</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for remito in remitos %}
+            <tr>
+                <td>{{ remito.fecha|date:"d/m/Y H:i" }}</td>
+                <td>{{ remito.get_tipo_remito_display }}</td>
+                <td>{{ remito.cliente|default_if_none:"-" }}</td>
+                <td>{{ remito.dep_origen|default_if_none:"-" }}</td>
+                <td>{{ remito.dep_destino|default_if_none:"-" }}</td>
+                <td>{{ remito.get_estado_remito_display }}</td>
+                <td>
+                    <a href="{% url 'remito_update' remito.id %}" class="btn btn-warning btn-sm">Editar</a>
+                    {% if remito.estado_remito == 'activo' %}
+                    <a href="{% url 'remito_anular' remito.id %}" class="btn btn-danger btn-sm">Anular</a>
+                    {% else %}
+                    <a href="{% url 'remito_activar' remito.id %}" class="btn btn-success btn-sm">Activar</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center">No se encontraron remitos.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

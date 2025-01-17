@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if object %}Editar Remito{% else %}Crear Nuevo Remito{% endif %}</h2>
+    <form method="post" id="remito-form">
+        {% csrf_token %}
+
+        <!-- Tipo de Remito -->
+        <div class="mb-3">
+            <label for="id_tipo_remito" class="form-label">Tipo de Remito</label>
+            {{ form.tipo_remito }}
+        </div>
+
+        <!-- Cliente -->
+        <div class="mb-3" id="cliente-field" style="display: none;">
+            <label for="id_cliente" class="form-label">Cliente</label>
+            {{ form.cliente }}
+        </div>
+
+        <!-- Depósito Origen -->
+        <div class="mb-3" id="dep-origen-field" style="display: none;">
+            <label for="id_dep_origen" class="form-label">Depósito Origen</label>
+            {{ form.dep_origen }}
+        </div>
+
+        <!-- Depósito Destino -->
+        <div class="mb-3" id="dep-destino-field" style="display: none;">
+            <label for="id_dep_destino" class="form-label">Depósito Destino</label>
+            {{ form.dep_destino }}
+        </div>
+
+        <!-- Número de Comprobante Asociado -->
+        <div class="mb-3">
+            <label for="id_nro_comprobante_asoc" class="form-label">Nro Comprobante Asociado</label>
+            {{ form.nro_comprobante_asoc }}
+        </div>
+
+        <!-- Detalles del Remito -->
+        <h3>Detalles del Remito</h3>
+        <button type="button" id="open-product-modal" class="btn btn-secondary mb-3">Agregar Producto</button>
+        <div id="detalle-remito">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Código de Barras</th>
+                        <th>Descripción</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="detalle-body">
+                    {% for detalle in detalle_remito %}
+                    <tr>
+                        <td data-barcode="{{ detalle.producto.barcode }}">{{ detalle.producto.barcode }}</td>
+                        <td>{{ detalle.producto.descripcion }}</td>
+                        <td><input type="number" name="cantidad" class="form-control" value="{{ detalle.cantidad }}" step="1" min="1"></td>
+                        <td>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="precio_unit" class="form-control" value="{{ detalle.precio_unit }}" step="0.01" min="0">
+                            </div>
+                        </td>
+                        <td><button type="button" class="btn btn-danger btn-sm remove-product">X</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Botones -->
+        <button type="submit" class="btn btn-success">Guardar</button>
+        <a href="{% url 'remito_list' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+<!-- Modal de búsqueda de productos -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productModalLabel">Buscar Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" id="product-search" class="form-control" placeholder="Buscar por código de barras o descripción">
+                </div>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Código de Barras</th>
+                            <th>Descripción</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="product-results">
+                        <!-- Resultados de la búsqueda -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tipoRemitoField = document.getElementById('id_tipo_remito');
+        const clienteField = document.getElementById('cliente-field');
+        const depOrigenField = document.getElementById('dep-origen-field');
+        const depDestinoField = document.getElementById('dep-destino-field');
+        const productModal = new bootstrap.Modal(document.getElementById('productModal'));
+        const productSearch = document.getElementById('product-search');
+        const productResults = document.getElementById('product-results');
+        const detalleBody = document.getElementById('detalle-body');
+
+        function toggleFields() {
+            const tipoRemito = tipoRemitoField.value;
+
+            clienteField.style.display = tipoRemito === 'compra' || tipoRemito === 'venta' ? '' : 'none';
+            depOrigenField.style.display = tipoRemito === 'venta' || tipoRemito === 'interdeposito' || tipoRemito === 'ajuste' ? '' : 'none';
+            depDestinoField.style.display = tipoRemito === 'compra' || tipoRemito === 'interdeposito' ? '' : 'none';
+        }
+
+        tipoRemitoField.addEventListener('change', toggleFields);
+        toggleFields();
+
+        document.getElementById('open-product-modal').addEventListener('click', function () {
+            productModal.show();
+        });
+
+        // Enfocar el campo de búsqueda cuando el modal esté completamente visible
+        document.getElementById('productModal').addEventListener('shown.bs.modal', function () {
+            productSearch.value = ''; // Limpiar el campo de búsqueda
+            productSearch.focus(); // Enfocar el campo de búsqueda
+        });
+
+
+        productSearch.addEventListener('input', function () {
+            const query = productSearch.value;
+            if (query.length > 2) {
+                fetch(`/productos/buscar/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ query })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    productResults.innerHTML = '';
+                    data.productos.forEach(producto => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${producto.barcode}</td>
+                            <td>${producto.descripcion}</td>
+                            <td><button class="btn btn-primary btn-sm select-product" data-barcode="${producto.barcode}" data-descripcion="${producto.descripcion}">Seleccionar</button></td>
+                        `;
+                        productResults.appendChild(row);
+                    });
+                });
+            }
+        });
+
+        document.getElementById('remito-form').addEventListener('submit', function (e) {
+            e.preventDefault(); // Prevent default form submission for debugging
+            const form = this; // Reference the form element
+            const rows = document.getElementById('detalle-body').querySelectorAll('tr');
+            const detalles = [];
+
+            rows.forEach(row => {
+                const barcode = row.querySelector('[data-barcode]') ? row.querySelector('[data-barcode]').dataset.barcode : null;
+                const cantidad = row.querySelector('input[name="cantidad"]').value;
+                const precioUnit = row.querySelector('input[name="precio_unit"]').value;
+
+                // Validate data
+                if (!barcode || !cantidad || !precioUnit) {
+                    alert('Todos los campos de los productos son obligatorios.');
+                    e.preventDefault();
+                    return;
+                }
+
+                detalles.push({
+                    barcode: barcode,
+                    cantidad: cantidad,
+                    precio_unit: precioUnit
+                });
+            });
+
+            const detallesInput = document.createElement('input');
+            detallesInput.type = 'hidden';
+            detallesInput.name = 'detalles[]';
+            detallesInput.value = JSON.stringify(detalles);
+
+            form.appendChild(detallesInput); // Append the input to the form
+            form.submit(); // Submit the form after appending the hidden input
+        });
+
+
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('select-product')) {
+                const barcode = e.target.dataset.barcode;
+                const descripcion = e.target.dataset.descripcion;
+
+                const existingRows = Array.from(detalleBody.querySelectorAll('tr'));
+                const isDuplicate = existingRows.some(row => row.querySelector('[data-barcode]').dataset.barcode === barcode);
+
+                if (isDuplicate) {
+                    alert('El producto ya está agregado al detalle del remito.');
+                    return;
+                }
+
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td data-barcode="${barcode}">${barcode}</td>
+                    <td>${descripcion}</td>
+                    <td><input type="number" name="cantidad" class="form-control" step="1" min="1"></td>
+                    <td>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" name="precio_unit" class="form-control" step="0.01" min="0">
+                        </div>
+                    </td>
+                    <td><button type="button" class="btn btn-danger btn-sm remove-product">X</button></td>
+                `;
+                detalleBody.appendChild(newRow);
+                productModal.hide();
+            }
+        });
+
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-product')) {
+                e.target.closest('tr').remove();
+            }
+        });
+    });
+</script>
+{% endblock %}

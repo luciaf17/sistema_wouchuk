@@ -31,7 +31,7 @@ urlpatterns = [
 
     path('productos/', include('productos.urls')),
 
-    #path('remitos/', include('remitos.urls')),
+    path('remitos/', include('remitos.urls')),
 
     # URL para el login
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
