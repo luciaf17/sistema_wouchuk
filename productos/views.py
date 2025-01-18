@@ -99,6 +99,14 @@ class ProductoCreateView(CreateView):
     form_class = ProductoForm
     template_name = 'productos/producto_form.html'
 
+    def get_initial(self):
+        initial = super().get_initial()
+        initial['loc_dep'] = 1
+        initial['loc_pas'] = 1
+        initial['loc_col'] = 1
+        initial['loc_est'] = 1
+        return initial
+
     def form_invalid(self, form):
         # Maneja errores de validación, como códigos de barras duplicados
         return self.render_to_response(self.get_context_data(form=form))
