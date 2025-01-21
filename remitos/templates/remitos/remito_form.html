@@ -84,7 +84,7 @@
         const productModal = new bootstrap.Modal(document.getElementById('productModal'));
         const productSearch = document.getElementById('product-search');
         const productResults = document.getElementById('product-results');
-        const detalleRemito = JSON.parse('{{ detalle_remito|escapejs }}'); 
+        const detalleRemito = '{{ detalle_remito|escapejs }}' ? JSON.parse('{{ detalle_remito|escapejs }}') : [];
         const depositos = JSON.parse('{{ depositos|safe }}'); // Lista de depósitos desde el backend
 
 

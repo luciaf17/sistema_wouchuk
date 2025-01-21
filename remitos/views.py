@@ -62,9 +62,10 @@ class RemitoListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['clientes'] = Cliente.objects.all()
-        context['remito_tipos'] = Remito._meta.get_field('tipo_remito').choices
+        context['depositos'] = json.dumps(list(Deposito.objects.values('id', 'descripcion')), default=str)
+        context['detalle_remito'] = json.dumps([], default=str)  # Lista vacía para creación
         return context
+
 
 def generar_pdf_remito(remito, detalles):
     pdf = FPDF()
@@ -198,11 +199,10 @@ class RemitoCreateView(CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['depositos'] = Deposito.objects.all()
-        context['detalle_remito'] = []
-        if hasattr(self, 'pdf_path'):
-            context['pdf_url'] = self.pdf_path
+        context['depositos'] = json.dumps(list(Deposito.objects.values('id', 'descripcion')), default=str)
+        context['detalle_remito'] = json.dumps([], default=str)  # Siempre enviar una lista vacía
         return context
+
 
 
 class RemitoUpdateView(UpdateView):
