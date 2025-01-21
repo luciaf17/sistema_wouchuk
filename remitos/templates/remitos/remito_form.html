@@ -12,11 +12,13 @@
             {{ form.tipo_remito }}
         </div>
 
-        <!-- Cliente -->
         <div class="mb-3" id="cliente-field" style="display: none;">
-            <label for="id_cliente" class="form-label">Cliente</label>
-            {{ form.cliente }}
+            <label for="cliente-input" class="form-label">Cliente</label>
+            <input type="text" id="cliente-input" class="form-control" placeholder="Escribe para buscar un cliente...">
+            <ul id="cliente-results" class="list-group mt-2" style="display: none; position: absolute; z-index: 1000;"></ul>
+            <input type="hidden" id="cliente-id" name="cliente">
         </div>
+        
 
         <!-- Número de Comprobante Asociado -->
         <div class="mb-3">
@@ -86,7 +88,11 @@
         const productResults = document.getElementById('product-results');
         const detalleRemito = '{{ detalle_remito|escapejs }}' ? JSON.parse('{{ detalle_remito|escapejs }}') : [];
         const depositos = JSON.parse('{{ depositos|safe }}'); // Lista de depósitos desde el backend
+        const clienteInput = document.getElementById('cliente-input');
+        const clienteResults = document.getElementById('cliente-results');
+        const clienteIdInput = document.getElementById('cliente-id');
 
+        
 
         const columnasPorTipo = {
             ajuste: ['Depósito Destino'],
@@ -94,6 +100,65 @@
             venta: ['Depósito Origen'],
             interdeposito: ['Depósito Origen', 'Depósito Destino']
         };
+
+        function inicializarCliente() {
+        const clienteData = {{ cliente_data|default:"null" | safe }}; // Variable cliente_data desde el backend
+        if (clienteData) {
+            clienteInput.value = clienteData.fantasia || clienteData.descripcion; // Mostrar "fantasia" o "descripcion"
+            clienteIdInput.value = clienteData.id; // Asignar el ID del cliente
+        }
+    }
+
+
+        clienteInput.addEventListener('input', function () {
+        const query = clienteInput.value.trim();
+
+        if (query.length > 2) {
+            fetch('/clientes/buscar/', { // URL de tu vista de búsqueda
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ query })
+            })
+            .then(response => response.json())
+            .then(data => {
+                clienteResults.innerHTML = '';
+                if (data.clientes && data.clientes.length > 0) {
+                    clienteResults.style.display = 'block';
+                    data.clientes.forEach(cliente => {
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item list-group-item-action';
+                        li.textContent = `${cliente.descripcion} (${cliente.fantasia || '-'})`;
+                        li.dataset.id = cliente.id;
+
+                        li.addEventListener('click', function () {
+                        clienteInput.value = cliente.fantasia || cliente.descripcion; // Prioriza el campo "fantasia"
+                        clienteIdInput.value = cliente.id; // Actualiza el input oculto con el ID del cliente
+                        clienteResults.style.display = 'none';
+                    });
+
+                        clienteResults.appendChild(li);
+                    });
+                } else {
+                    clienteResults.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error al buscar clientes:', error);
+            });
+        } else {
+            clienteResults.style.display = 'none';
+        }
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!clienteResults.contains(e.target) && e.target !== clienteInput) {
+            clienteResults.style.display = 'none';
+        }
+    });
+
 
         function actualizarEncabezados() {
             const tipoRemito = tipoRemitoField.value;
@@ -155,7 +220,7 @@
     });
 }
 
-
+    
 
         document.getElementById('open-product-modal').addEventListener('click', function () {
             if (!tipoRemitoField.value) {
@@ -293,6 +358,7 @@
 
         actualizarEncabezados();
         inicializarDetalles();
+        inicializarCliente(); 
     });
 </script>
 {% endblock %}

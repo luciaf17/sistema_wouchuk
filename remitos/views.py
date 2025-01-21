@@ -18,6 +18,7 @@ from math import ceil
 from django.http import FileResponse
 from datetime import datetime, timedelta
 from django.utils.timezone import make_aware
+from django.db.models import Q
 
 class RemitoListView(ListView):
     model = Remito
@@ -32,6 +33,7 @@ class RemitoListView(ListView):
         fecha_hasta = self.request.GET.get('fecha_hasta')
         cliente = self.request.GET.get('cliente')
         tipo_remito = self.request.GET.get('tipo_remito')
+        producto = self.request.GET.get('producto')
 
         # Filtro por fecha desde (inicio del día)
         if fecha_desde:
@@ -57,14 +59,18 @@ class RemitoListView(ListView):
         if tipo_remito:
             queryset = queryset.filter(tipo_remito=tipo_remito)
 
+        # Filtro por producto
+        if producto:
+            queryset = queryset.filter(detalleremito__producto__descripcion__icontains=producto).distinct()
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['depositos'] = json.dumps(list(Deposito.objects.values('id', 'descripcion')), default=str)
-        context['detalle_remito'] = json.dumps([], default=str)  # Lista vacía para creación
+        context['clientes'] = Cliente.objects.all()  # Lista de clientes para el filtro
+        context['remito_tipos'] = dict(Remito._meta.get_field('tipo_remito').choices)  # Opciones del tipo de remito
         return context
+
 
 
 def generar_pdf_remito(remito, detalles):
@@ -91,7 +97,10 @@ def generar_pdf_remito(remito, detalles):
     pdf.set_font('Helvetica', '', 10)  # Fuente regular para detalles
     pdf.cell(200, 10, f"Fecha: {localtime(remito.fecha).strftime('%d/%m/%Y %H:%M')}", ln=True, align="R")
     pdf.cell(200, 10, f"Tipo: {remito.get_tipo_remito_display()}", ln=True, align="L")
-    pdf.cell(200, 10, f"Cliente: {remito.cliente or '-'}", ln=True, align="L")
+
+    # Mostrar fantasía del cliente si existe
+    cliente_fantasia = remito.cliente.fantasia if remito.cliente and remito.cliente.fantasia else "-"
+    pdf.cell(200, 10, f"Cliente: {cliente_fantasia}", ln=True, align="L")
 
     # Verificar si hay número de comprobante asociado
     if remito.nro_comprobante_asoc:
@@ -284,7 +293,19 @@ class RemitoUpdateView(UpdateView):
                 'producto__id', 'producto__descripcion', 'dep_origen__id', 'dep_destino__id', 'cantidad', 'precio_unit'
             )
         ), default=str)
+
+        # Obtener cliente relacionado
+        if self.object.cliente:
+            context['cliente_data'] = {
+                'id': self.object.cliente.id,
+                'descripcion': self.object.cliente.descripcion,
+                'fantasia': self.object.cliente.fantasia
+            }
+        else:
+            context['cliente_data'] = None
+
         return context
+
 
 
 

@@ -10,13 +10,14 @@ from .views import (TipoDocumentoListView, TipoDocumentoCreateView, TipoDocument
                     LocalidadListView, LocalidadCreateView, LocalidadUpdateView, LocalidadDeleteView,
                     ClienteListView, ClienteCreateView, ClienteUpdateView, ClienteDeleteView,
                     ClienteTipoCreateView, ClienteTipoDeleteView,
-                    ContactoCreateView, ContactoListView, ContactoUpdateView, ContactoDeleteView
+                    ContactoCreateView, ContactoListView, ContactoUpdateView, ContactoDeleteView,
+                    buscar_cliente
 
 
 )
 
 urlpatterns = [
-    path('clientes/buscar/', views.buscar_cliente, name='buscar_cliente'),
+    path('buscar/', buscar_cliente, name='buscar_cliente'),
 
     path('abm/tipodocumentos/', TipoDocumentoListView.as_view(), name='tipodocumento_list'),
     path('abm/tipodocumentos/nuevo/', TipoDocumentoCreateView.as_view(), name='tipodocumento_create'),

@@ -40,14 +40,20 @@
                 <label for="tipo_remito" class="form-label">Tipo de Remito:</label>
                 <select id="tipo_remito" name="tipo_remito" class="form-select">
                     <option value="">Todos</option>
-                    {% for key, value in remito_tipos %}
+                    {% for key, value in remito_tipos.items %} <!-- Usar .items para un diccionario -->
                     <option value="{{ key }}" {% if key == request.GET.tipo_remito %}selected{% endif %}>
                         {{ value }}
                     </option>
                     {% endfor %}
-                </select>
+                </select>                
             </div>
         </div>
+
+        <div class="col-md-3">
+            <label for="producto" class="form-label">Producto:</label>
+            <input type="text" id="producto" name="producto" class="form-control" placeholder="Buscar producto..." value="{{ request.GET.producto }}">
+        </div>
+        
     
         <div class="row mt-3">
             <div class="col-md-12">
