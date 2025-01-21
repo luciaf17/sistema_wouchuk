@@ -284,7 +284,6 @@ class RemitoUpdateView(UpdateView):
 
 
 
-
 def remito_anular(request, pk):
     remito = get_object_or_404(Remito, pk=pk)
     remito.estado_remito = 'anulado'

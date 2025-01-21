@@ -84,8 +84,10 @@
         const productModal = new bootstrap.Modal(document.getElementById('productModal'));
         const productSearch = document.getElementById('product-search');
         const productResults = document.getElementById('product-results');
+        const detalleRemito = JSON.parse('{{ detalle_remito|escapejs }}'); 
+        const depositos = JSON.parse('{{ depositos|safe }}'); // Lista de depósitos desde el backend
 
-        // Configuración de columnas dinámicas según el tipo de remito
+
         const columnasPorTipo = {
             ajuste: ['Depósito Destino'],
             compra: ['Depósito Destino'],
@@ -105,21 +107,67 @@
                     <th>Acciones</th>
                 </tr>
             `;
+            clienteField.style.display = (tipoRemito === 'compra' || tipoRemito === 'venta') ? '' : 'none';
         }
 
-        // Abrir el modal para buscar productos
+        function inicializarDetalles() {
+    detalleBody.innerHTML = '';
+    detalleRemito.forEach(detalle => {
+        const newRow = document.createElement('tr');
+        newRow.dataset.id = detalle.producto__id;
+        newRow.innerHTML = `
+            <td>${detalle.producto__id}</td>
+            <td>${detalle.producto__descripcion}</td>
+            ${columnasPorTipo[tipoRemitoField.value]?.includes('Depósito Origen') ? `
+                <td>
+                    <select name="dep_origen" class="form-control">
+                        <option value="">Seleccionar</option>
+                        ${depositos.map(deposito => `
+                            <option value="${deposito.id}" ${detalle.dep_origen__id == deposito.id ? 'selected' : ''}>
+                                ${deposito.descripcion}
+                            </option>
+                        `).join('')}
+                    </select>
+                </td>
+            ` : ''}
+            ${columnasPorTipo[tipoRemitoField.value]?.includes('Depósito Destino') ? `
+                <td>
+                    <select name="dep_destino" class="form-control">
+                        <option value="">Seleccionar</option>
+                        ${depositos.map(deposito => `
+                            <option value="${deposito.id}" ${detalle.dep_destino__id == deposito.id ? 'selected' : ''}>
+                                ${deposito.descripcion}
+                            </option>
+                        `).join('')}
+                    </select>
+                </td>
+            ` : ''}
+            <td><input type="number" name="cantidad" class="form-control" step="1" min="1" value="${detalle.cantidad}"></td>
+            <td>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" name="precio_unit" class="form-control" step="0.01" min="0" value="${detalle.precio_unit}">
+                </div>
+            </td>
+            <td><button type="button" class="btn btn-danger btn-sm remove-product">X</button></td>
+        `;
+        detalleBody.appendChild(newRow);
+    });
+}
+
+
+
         document.getElementById('open-product-modal').addEventListener('click', function () {
             if (!tipoRemitoField.value) {
                 alert('Debe seleccionar un tipo de remito antes de agregar productos.');
                 return;
             }
-            productSearch.value = ''; // Limpiar búsqueda previa
-            productResults.innerHTML = ''; // Limpiar resultados previos
+            productSearch.value = '';
+            productResults.innerHTML = '';
             productModal.show();
-            setTimeout(() => productSearch.focus(), 500); // Hacer foco en el input
+            setTimeout(() => productSearch.focus(), 500);
         });
 
-        // Buscar productos
         productSearch.addEventListener('input', function () {
             const query = productSearch.value;
             if (query.length > 2) {
@@ -153,69 +201,64 @@
             }
         });
 
-        // Agregar producto a la tabla de detalles
         document.addEventListener('click', function (e) {
-            if (e.target.classList.contains('select-product')) {
-                const id = e.target.dataset.id;
-                const descripcion = e.target.dataset.descripcion;
-                const tipoRemito = tipoRemitoField.value;
-                const columnas = columnasPorTipo[tipoRemito];
+    if (e.target.classList.contains('select-product')) {
+        const id = e.target.dataset.id;
+        const descripcion = e.target.dataset.descripcion;
+        const tipoRemito = tipoRemitoField.value;
+        const columnas = columnasPorTipo[tipoRemito];
 
-                const existingRows = Array.from(detalleBody.querySelectorAll('tr'));
-                const isDuplicate = existingRows.some(row => row.dataset.id === id);
+        if (Array.from(detalleBody.querySelectorAll('tr')).some(row => row.dataset.id === id)) {
+            alert('El producto ya está agregado.');
+            return;
+        }
 
-                if (isDuplicate) {
-                    alert('El producto ya está agregado.');
-                    return;
-                }
+        const newRow = document.createElement('tr');
+        newRow.dataset.id = id;
+        newRow.innerHTML = `
+            <td>${id}</td>
+            <td>${descripcion}</td>
+            ${columnas?.includes('Depósito Origen') ? `
+                <td>
+                    <select name="dep_origen" class="form-control">
+                        <option value="">Seleccionar</option>
+                        ${depositos.map(deposito => `
+                            <option value="${deposito.id}">${deposito.descripcion}</option>
+                        `).join('')}
+                    </select>
+                </td>
+            ` : ''}
+            ${columnas?.includes('Depósito Destino') ? `
+                <td>
+                    <select name="dep_destino" class="form-control">
+                        <option value="">Seleccionar</option>
+                        ${depositos.map(deposito => `
+                            <option value="${deposito.id}">${deposito.descripcion}</option>
+                        `).join('')}
+                    </select>
+                </td>
+            ` : ''}
+            <td><input type="number" name="cantidad" class="form-control" step="1" min="1"></td>
+            <td>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" name="precio_unit" class="form-control" step="0.01" min="0">
+                </div>
+            </td>
+            <td><button type="button" class="btn btn-danger btn-sm remove-product">X</button></td>
+        `;
+        detalleBody.appendChild(newRow);
+        productModal.hide();
+    }
+});
 
-                const newRow = document.createElement('tr');
-                newRow.dataset.id = id;
-                newRow.innerHTML = `
-                    <td>${id}</td>
-                    <td>${descripcion}</td>
-                    ${columnas?.includes('Depósito Origen') ? `
-                        <td>
-                            <select name="dep_origen" class="form-control">
-                                <option value="">Seleccionar</option>
-                                {% for deposito in depositos %}
-                                <option value="{{ deposito.id }}">{{ deposito.descripcion }}</option>
-                                {% endfor %}
-                            </select>
-                        </td>
-                    ` : ''}
-                    ${columnas?.includes('Depósito Destino') ? `
-                        <td>
-                            <select name="dep_destino" class="form-control">
-                                <option value="">Seleccionar</option>
-                                {% for deposito in depositos %}
-                                <option value="{{ deposito.id }}">{{ deposito.descripcion }}</option>
-                                {% endfor %}
-                            </select>
-                        </td>
-                    ` : ''}
-                    <td><input type="number" name="cantidad" class="form-control" step="1" min="1"></td>
-                    <td>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" name="precio_unit" class="form-control" step="0.01" min="0">
-                        </div>
-                    </td>
-                    <td><button type="button" class="btn btn-danger btn-sm remove-product">X</button></td>
-                `;
-                detalleBody.appendChild(newRow);
-                productModal.hide();
-            }
-        });
 
-        // Eliminar producto de la tabla
         document.addEventListener('click', function (e) {
             if (e.target.classList.contains('remove-product')) {
                 e.target.closest('tr').remove();
             }
         });
 
-        // Validar detalles antes de enviar el formulario
         document.getElementById('remito-form').addEventListener('submit', function (e) {
             const rows = detalleBody.querySelectorAll('tr');
             if (rows.length === 0) {
@@ -232,13 +275,7 @@
                 const cantidad = row.querySelector('[name="cantidad"]').value;
                 const precioUnit = row.querySelector('[name="precio_unit"]').value;
 
-                detalles.push({
-                    id,
-                    dep_origen: depOrigen,
-                    dep_destino: depDestino,
-                    cantidad,
-                    precio_unit: precioUnit
-                });
+                detalles.push({ id, dep_origen: depOrigen, dep_destino: depDestino, cantidad, precio_unit: precioUnit });
             });
 
             const detallesInput = document.createElement('input');
@@ -249,15 +286,13 @@
             this.appendChild(detallesInput);
         });
 
-        // Actualizar encabezados y columnas al cambiar el tipo de remito
         tipoRemitoField.addEventListener('change', function () {
             actualizarEncabezados();
-            clienteField.style.display = (tipoRemitoField.value === 'compra' || tipoRemitoField.value === 'venta') ? '' : 'none';
-            detalleBody.innerHTML = ''; // Limpiar detalles al cambiar tipo
+            detalleBody.innerHTML = '';
         });
 
-        actualizarEncabezados(); // Inicializar encabezados según el tipo de remito
+        actualizarEncabezados();
+        inicializarDetalles();
     });
 </script>
-
 {% endblock %}
