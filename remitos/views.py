@@ -4,6 +4,7 @@ from django.views.generic import ListView, CreateView, UpdateView
 from django.shortcuts import redirect, get_object_or_404
 from .models import Remito, DetalleRemito
 from clientes.models import Cliente
+from stock.models import Deposito
 from .forms import RemitoForm, DetalleRemitoForm
 from django.forms import modelformset_factory
 from django.db import transaction
@@ -24,7 +25,7 @@ class RemitoListView(ListView):
     context_object_name = 'remitos'
 
     def get_queryset(self):
-        queryset = Remito.objects.select_related('cliente', 'dep_origen', 'dep_destino').all()
+        queryset = Remito.objects.select_related('cliente').all()
 
         # Obtener los parámetros de filtro
         fecha_desde = self.request.GET.get('fecha_desde')
@@ -90,8 +91,6 @@ def generar_pdf_remito(remito, detalles):
     pdf.cell(200, 10, f"Fecha: {localtime(remito.fecha).strftime('%d/%m/%Y %H:%M')}", ln=True, align="R")
     pdf.cell(200, 10, f"Tipo: {remito.get_tipo_remito_display()}", ln=True, align="L")
     pdf.cell(200, 10, f"Cliente: {remito.cliente or '-'}", ln=True, align="L")
-    pdf.cell(200, 10, f"Depósito Origen: {remito.dep_origen or '-'}", ln=True, align="L")
-    pdf.cell(200, 10, f"Depósito Destino: {remito.dep_destino or '-'}", ln=True, align="L")
     pdf.ln(10)
 
     # Configuración de la tabla
@@ -102,19 +101,25 @@ def generar_pdf_remito(remito, detalles):
     pdf.cell(40, 10, "Barcode", border=1, align="C", fill=True)
     pdf.cell(70, 10, "Descripción", border=1, align="C", fill=True)
     pdf.cell(20, 10, "Cantidad", border=1, align="C", fill=True)
-    pdf.cell(30, 10, "Precio Unit.", border=1, align="C", fill=True)
+    pdf.cell(10, 10, "D.O", border=1, align="C", fill=True)
+    pdf.cell(10, 10, "D.D", border=1, align="C", fill=True)
+    pdf.cell(20, 10, "Precio Unit.", border=1, align="C", fill=True)
     pdf.ln()
 
     # Filas
     pdf.set_text_color(0, 0, 0)  # Texto negro para las filas
     pdf.set_font('Helvetica', '', 8)  # Fuente regular para las filas
+
     for detalle in detalles:
-        pdf.cell(20, 10, str(detalle.id), border=1, align="C")  # ID del detalle
-        pdf.cell(40, 10, detalle.producto.barcode, border=1, align="C")  # Código de barras
-        pdf.cell(70, 10, detalle.producto.descripcion, border=1, align="L")
-        pdf.cell(20, 10, str(detalle.cantidad), border=1, align="C")
-        pdf.cell(30, 10, f"${detalle.precio_unit:.2f}", border=1, align="R")
+        pdf.cell(20, 10, str(detalle.producto.id), border=1, align="C")  # Código
+        pdf.cell(40, 10, detalle.producto.barcode, border=1, align="C")  # Barcode
+        pdf.cell(70, 10, detalle.producto.descripcion[:35], border=1, align="L")  # Descripción corta
+        pdf.cell(20, 10, str(detalle.cantidad), border=1, align="C")  # Cantidad
+        pdf.cell(10, 10, detalle.dep_origen.descripcion if detalle.dep_origen else "-", border=1, align="C")  # Depósito Origen
+        pdf.cell(10, 10, detalle.dep_destino.descripcion if detalle.dep_destino else "-", border=1, align="C")  # Depósito Destino
+        pdf.cell(20, 10, f"${detalle.precio_unit:.2f}", border=1, align="R")  # Precio Unitario
         pdf.ln()
+
 
     # Guardar PDF
     pdf_dir = "static/remitos"
@@ -133,44 +138,71 @@ class RemitoCreateView(CreateView):
     template_name = 'remitos/remito_form.html'
 
     def form_valid(self, form):
-        # Guardar el remito principal
+        tipo_remito = form.cleaned_data.get('tipo_remito')  # Obtener el tipo de remito
         response = super().form_valid(form)
 
-        # Procesar los detalles del remito
         detalles_json = self.request.POST.get('detalles[]')
         if detalles_json:
             try:
                 detalles = json.loads(detalles_json)
                 with transaction.atomic():
                     for detalle in detalles:
-                        barcode = detalle.get('barcode')
+                        producto_id = detalle.get('id')
+                        dep_origen_id = detalle.get('dep_origen')
+                        dep_destino_id = detalle.get('dep_destino')
                         cantidad = detalle.get('cantidad')
                         precio_unit = detalle.get('precio_unit')
 
-                        if not barcode or not cantidad or not precio_unit:
-                            raise ValueError('Missing fields in detalle.')
+                        # Verificar campos requeridos
+                        if not producto_id or not cantidad or not precio_unit:
+                            raise ValueError(f"Datos incompletos en detalle: {detalle}")
 
-                        producto = Producto.objects.get(barcode=barcode)
+                        producto = Producto.objects.get(id=producto_id)
+
+                        # Asignar depósitos automáticamente según tipo de remito
+                        dep_origen = (
+                            Deposito.objects.get_or_create(descripcion="Compras")[0]
+                            if tipo_remito == "compra"
+                            else Deposito.objects.get(id=dep_origen_id) if dep_origen_id else None
+                        )
+                        dep_destino = (
+                            Deposito.objects.get_or_create(descripcion="Ventas")[0]
+                            if tipo_remito == "venta"
+                            else Deposito.objects.get(id=dep_destino_id) if dep_destino_id else None
+                        )
+
                         DetalleRemito.objects.create(
                             remito=self.object,
                             producto=producto,
+                            dep_origen=dep_origen,
+                            dep_destino=dep_destino,
                             cantidad=int(cantidad),
                             precio_unit=decimal.Decimal(precio_unit)
                         )
-            except (ValueError, json.JSONDecodeError) as e:
-                form.add_error(None, f"Error processing detalles: {e}")
+            except (ValueError, json.JSONDecodeError, Deposito.DoesNotExist, Producto.DoesNotExist) as e:
+                form.add_error(None, f"Error procesando detalles: {e}")
                 return self.form_invalid(form)
 
         # Generar el PDF
         detalles_remito = DetalleRemito.objects.filter(remito=self.object)
         pdf_path = generar_pdf_remito(self.object, detalles_remito)
 
-        # Retornar el PDF como respuesta
-        return FileResponse(open(pdf_path, 'rb'), content_type='application/pdf')
-
+        # Almacenar el path del PDF para el template
+        self.pdf_path = pdf_path
+        return redirect(self.get_success_url())
 
     def get_success_url(self):
+        if hasattr(self, 'pdf_path'):
+            return f'/static/remitos/remito_{str(self.object.id).zfill(8)}.pdf'
         return reverse_lazy('remito_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['depositos'] = Deposito.objects.all()
+        context['detalle_remito'] = []
+        if hasattr(self, 'pdf_path'):
+            context['pdf_url'] = self.pdf_path
+        return context
 
 
 class RemitoUpdateView(UpdateView):
@@ -178,60 +210,78 @@ class RemitoUpdateView(UpdateView):
     form_class = RemitoForm
     template_name = 'remitos/remito_form.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Obtener detalles relacionados con el remito actual
-        context['detalle_remito'] = DetalleRemito.objects.filter(remito=self.object)
-        return context
-
     def form_valid(self, form):
+        tipo_remito = form.cleaned_data.get('tipo_remito')  # Obtener el tipo de remito
         response = super().form_valid(form)
 
-        # Procesar los detalles actualizados
         detalles_json = self.request.POST.get('detalles[]')
         if detalles_json:
             try:
-                detalles = json.loads(detalles_json)  # Deserializar JSON
+                detalles = json.loads(detalles_json)
                 with transaction.atomic():
-                    # Eliminar detalles existentes para reemplazar por los nuevos
+                    # Eliminar detalles existentes antes de agregar nuevos
                     DetalleRemito.objects.filter(remito=self.object).delete()
                     for detalle in detalles:
-                        barcode = detalle.get('barcode')
+                        producto_id = detalle.get('id')
+                        dep_origen_id = detalle.get('dep_origen')
+                        dep_destino_id = detalle.get('dep_destino')
                         cantidad = detalle.get('cantidad')
                         precio_unit = detalle.get('precio_unit')
 
-                        if not barcode or not cantidad or not precio_unit:
-                            raise ValueError('Missing fields in detalle.')
+                        # Verificar campos requeridos
+                        if not producto_id or not cantidad or not precio_unit:
+                            raise ValueError(f"Datos incompletos en detalle: {detalle}")
 
-                        producto = Producto.objects.get(barcode=barcode)
+                        producto = Producto.objects.get(id=producto_id)
+
+                        # Asignar depósitos automáticamente según tipo de remito
+                        dep_origen = (
+                            Deposito.objects.get_or_create(descripcion="Compras")[0]
+                            if tipo_remito == "compra"
+                            else Deposito.objects.get(id=dep_origen_id) if dep_origen_id else None
+                        )
+                        dep_destino = (
+                            Deposito.objects.get_or_create(descripcion="Ventas")[0]
+                            if tipo_remito == "venta"
+                            else Deposito.objects.get(id=dep_destino_id) if dep_destino_id else None
+                        )
+
                         DetalleRemito.objects.create(
                             remito=self.object,
                             producto=producto,
+                            dep_origen=dep_origen,
+                            dep_destino=dep_destino,
                             cantidad=int(cantidad),
                             precio_unit=decimal.Decimal(precio_unit)
                         )
-            except (ValueError, json.JSONDecodeError) as e:
-                form.add_error(None, f"Error processing detalles: {e}")
+            except (ValueError, json.JSONDecodeError, Deposito.DoesNotExist, Producto.DoesNotExist) as e:
+                form.add_error(None, f"Error procesando detalles: {e}")
                 return self.form_invalid(form)
 
         # Generar el PDF
         detalles_remito = DetalleRemito.objects.filter(remito=self.object)
         pdf_path = generar_pdf_remito(self.object, detalles_remito)
 
-        # Retornar el PDF en una nueva pestaña
-        try:
-            # Usar `FileResponse` para servir el archivo
-            pdf_file = open(pdf_path, 'rb')  # Abrir sin `with` para evitar que se cierre automáticamente
-            response = FileResponse(pdf_file, content_type='application/pdf')
-            response['Content-Disposition'] = f'inline; filename="remito_{str(self.object.id).zfill(6)}.pdf"'
-            return response
-        except Exception as e:
-            form.add_error(None, f"Error al generar o abrir el PDF: {str(e)}")
-            return self.form_invalid(form)
+        # Almacenar el path del PDF para el template
+        self.pdf_path = pdf_path
+        return redirect(self.get_success_url())
 
     def get_success_url(self):
-        # Redirigir al listado de remitos si el PDF no se genera correctamente
+        if hasattr(self, 'pdf_path'):
+            return f'/static/remitos/remito_{str(self.object.id).zfill(8)}.pdf'
         return reverse_lazy('remito_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['depositos'] = json.dumps(list(Deposito.objects.values('id', 'descripcion')), default=str)
+        context['detalle_remito'] = json.dumps(list(
+            DetalleRemito.objects.filter(remito=self.object).values(
+                'producto__id', 'producto__descripcion', 'dep_origen__id', 'dep_destino__id', 'cantidad', 'precio_unit'
+            )
+        ), default=str)
+        return context
+
+
 
 
 

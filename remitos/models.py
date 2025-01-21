@@ -12,8 +12,6 @@ class Remito(AuditModel):
         ('interdeposito', 'Interdepósito'),
     ])
     cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True)
-    dep_origen = models.ForeignKey(Deposito, on_delete=models.SET_NULL, null=True, blank=True, related_name='remitos_origen')
-    dep_destino = models.ForeignKey(Deposito, on_delete=models.SET_NULL, null=True, blank=True, related_name='remitos_destino')
     nro_comprobante_asoc = models.TextField(null=True, blank=True)
     fecha = models.DateTimeField(auto_now_add=True)
     estado_remito = models.CharField(max_length=50, choices=[
@@ -28,6 +26,8 @@ class Remito(AuditModel):
 class DetalleRemito(AuditModel):
     remito = models.ForeignKey(Remito, on_delete=models.CASCADE, verbose_name="Remito")
     producto = models.ForeignKey('productos.Producto', on_delete=models.CASCADE, verbose_name="Producto")
+    dep_origen = models.ForeignKey(Deposito, on_delete=models.SET_NULL, null=True, blank=True, related_name='detalles_origen')
+    dep_destino = models.ForeignKey(Deposito, on_delete=models.SET_NULL, null=True, blank=True, related_name='detalles_destino')
     cantidad = models.PositiveIntegerField(verbose_name="Cantidad")
     precio_unit = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Precio Unitario")
 

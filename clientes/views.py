@@ -4,11 +4,43 @@ from .models import TipoDocumento, CategoriaArca, Rubro, Departamento, TipoClien
 from .forms import TipoDocumentoForm, CategoriaArcaForm, RubroForm, DepartamentoForm, TipoClienteForm, PaisForm, ProvinciaForm, LocalidadForm, ClienteForm, ClienteTipoForm, ContactoForm, ClienteTipoFormSet
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+from django.db.models import Q
 
 #este decorador hace que se requiera login en toda la app
 @login_required
 def home(request):
     return render(request, 'home.html')
+
+@csrf_exempt
+def buscar_cliente(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        query = data.get('query', '').strip()
+
+        if query:
+            # Dividir la consulta en palabras individuales
+            palabras = query.split()
+
+            # Crear un filtro Q dinámico para buscar cada palabra en descripción y fantasía
+            q_filter = Q()
+            for palabra in palabras:
+                q_filter &= Q(descripcion__icontains=palabra) | Q(fantasia__icontains=palabra)
+
+            # Filtra clientes utilizando el filtro compuesto
+            clientes = Cliente.objects.filter(q_filter)[:10]  # Limitar resultados a 10
+
+            # Incluye el `id`, `descripcion` y `fantasia` en el resultado
+            resultado = [
+                {'id': c.id, 'descripcion': c.descripcion, 'fantasia': c.fantasia or ""}
+                for c in clientes
+            ]
+            return JsonResponse({'clientes': resultado})
+
+        return JsonResponse({'clientes': []})
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 #vistas para tipo de documento
 class TipoDocumentoListView(ListView):

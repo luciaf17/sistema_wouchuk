@@ -65,8 +65,6 @@
                 <th>Fecha</th>
                 <th>Tipo</th>
                 <th>Cliente</th>
-                <th>Depósito Origen</th>
-                <th>Depósito Destino</th>
                 <th>Estado</th>
                 <th>Acciones</th>
             </tr>
@@ -78,8 +76,6 @@
                 <td>{{ remito.fecha|date:"d/m/Y H:i" }}</td>
                 <td>{{ remito.get_tipo_remito_display }}</td>
                 <td>{{ remito.cliente|default_if_none:"-" }}</td>
-                <td>{{ remito.dep_origen|default_if_none:"-" }}</td>
-                <td>{{ remito.dep_destino|default_if_none:"-" }}</td>
                 <td>{{ remito.get_estado_remito_display }}</td>
                 <td>
                     <a href="{% url 'remito_update' remito.id %}" class="btn btn-warning btn-sm">Editar</a>
@@ -93,7 +89,6 @@
             {% empty %}
             <tr>
                 <td colspan="8" class="text-center">No se encontraron remitos.</td>
-                <p>Se encontraron {{ remitos.count }} remitos.</p>
             </tr>
             {% endfor %}
         </tbody>

@@ -1,4 +1,5 @@
 from django.urls import path
+from . import views
 from .views import (TipoDocumentoListView, TipoDocumentoCreateView, TipoDocumentoUpdateView, TipoDocumentoDeleteView, 
                     CategoriaArcaListView, CategoriaArcaCreateView, CategoriaArcaUpdateView, CategoriaArcaDeleteView,
                     RubroListView, RubroCreateView, RubroUpdateView, RubroDeleteView,
@@ -15,6 +16,8 @@ from .views import (TipoDocumentoListView, TipoDocumentoCreateView, TipoDocument
 )
 
 urlpatterns = [
+    path('clientes/buscar/', views.buscar_cliente, name='buscar_cliente'),
+
     path('abm/tipodocumentos/', TipoDocumentoListView.as_view(), name='tipodocumento_list'),
     path('abm/tipodocumentos/nuevo/', TipoDocumentoCreateView.as_view(), name='tipodocumento_create'),
     path('abm/tipodocumentos/<int:pk>/editar/', TipoDocumentoUpdateView.as_view(), name='tipodocumento_update'),

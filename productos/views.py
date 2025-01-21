@@ -18,19 +18,27 @@ def buscar_producto(request):
         query = data.get('query', '').strip()
 
         if query:
-            # Filtra productos por descripción o código de barras (barcode)
-            productos = Producto.objects.filter(
-                models.Q(descripcion__icontains=query) | models.Q(barcode__icontains=query)
-            )[:10]  # Limitar resultados a 10 para evitar sobrecarga
+            # Dividir la consulta en palabras individuales
+            palabras = query.split()
 
+            # Crear un filtro Q dinámico para buscar cada palabra
+            q_filter = models.Q()
+            for palabra in palabras:
+                q_filter &= models.Q(descripcion__icontains=palabra) | models.Q(barcode__icontains=palabra)
+
+            # Filtra productos utilizando el filtro compuesto
+            productos = Producto.objects.filter(q_filter) # Limitar resultados a 10 para evitar sobrecarga
+
+            # Incluye el `id` de los productos en el resultado
             resultado = [
-                {'barcode': p.barcode, 'descripcion': p.descripcion}
+                {'id': p.id, 'barcode': p.barcode, 'descripcion': p.descripcion}
                 for p in productos
             ]
             return JsonResponse({'productos': resultado})
 
         return JsonResponse({'productos': []})
     return JsonResponse({'error': 'Método no permitido'}, status=405)
+
 
 @csrf_exempt
 def buscar_google(request):
@@ -60,27 +68,44 @@ def obtener_datos_de_google(codigo):
     else:
         return "Error en la búsqueda"
 
+from django.db.models import Q
+
 class ProductoListView(ListView):
     model = Producto
     template_name = 'productos/producto_list.html'
     context_object_name = 'productos'
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        q = self.request.GET.get('q')
-        loc_dep = self.request.GET.get('loc_dep')
-        loc_pas = self.request.GET.get('loc_pas')
-        loc_col = self.request.GET.get('loc_col')
-        loc_est = self.request.GET.get('loc_est')
+        queryset = Producto.objects.all()
 
-        if q:
-            queryset = queryset.filter(models.Q(descripcion__icontains=q) | models.Q(barcode__icontains=q))
+        # Obtener los parámetros de búsqueda
+        query = self.request.GET.get('q', '').strip()
+        loc_dep = self.request.GET.get('loc_dep', '')
+        loc_pas = self.request.GET.get('loc_pas', '')
+        loc_col = self.request.GET.get('loc_col', '')
+        loc_est = self.request.GET.get('loc_est', '')
+
+        # Filtrar por descripción o código de barras (búsqueda avanzada)
+        if query:
+            palabras = query.split()
+            q_filter = Q()
+            for palabra in palabras:
+                q_filter &= Q(descripcion__icontains=palabra) | Q(barcode__icontains=palabra)
+            queryset = queryset.filter(q_filter)
+
+        # Filtrar por depósito
         if loc_dep:
             queryset = queryset.filter(loc_dep_id=loc_dep)
+
+        # Filtrar por pasillo
         if loc_pas:
             queryset = queryset.filter(loc_pas_id=loc_pas)
+
+        # Filtrar por columna
         if loc_col:
             queryset = queryset.filter(loc_col_id=loc_col)
+
+        # Filtrar por estante
         if loc_est:
             queryset = queryset.filter(loc_est_id=loc_est)
 
@@ -88,11 +113,13 @@ class ProductoListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Agregar datos de los select para filtros al contexto
         context['depositos'] = Deposito.objects.all()
         context['pasillos'] = Pasillo.objects.all()
         context['columnas'] = Columna.objects.all()
         context['estantes'] = Estante.objects.all()
         return context
+
 
 class ProductoCreateView(CreateView):
     model = Producto
