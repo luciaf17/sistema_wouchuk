@@ -92,6 +92,11 @@ def generar_pdf_remito(remito, detalles):
     pdf.cell(200, 10, f"Fecha: {localtime(remito.fecha).strftime('%d/%m/%Y %H:%M')}", ln=True, align="R")
     pdf.cell(200, 10, f"Tipo: {remito.get_tipo_remito_display()}", ln=True, align="L")
     pdf.cell(200, 10, f"Cliente: {remito.cliente or '-'}", ln=True, align="L")
+
+    # Verificar si hay número de comprobante asociado
+    if remito.nro_comprobante_asoc:
+        pdf.cell(200, 10, f"Nro Comprobante Asociado: {remito.nro_comprobante_asoc}", ln=True, align="L")
+    
     pdf.ln(10)
 
     # Configuración de la tabla
@@ -121,7 +126,6 @@ def generar_pdf_remito(remito, detalles):
         pdf.cell(20, 10, f"${detalle.precio_unit:.2f}", border=1, align="R")  # Precio Unitario
         pdf.ln()
 
-
     # Guardar PDF
     pdf_dir = "static/remitos"
     if not os.path.exists(pdf_dir):
@@ -130,6 +134,7 @@ def generar_pdf_remito(remito, detalles):
     pdf_path = os.path.join(pdf_dir, f"remito_{remito_id_formateado}.pdf")
     pdf.output(pdf_path)
     return pdf_path
+
 
 
 
