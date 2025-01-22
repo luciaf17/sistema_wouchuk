@@ -176,8 +176,8 @@
         }
 
         function inicializarDetalles() {
-    detalleBody.innerHTML = '';
-    detalleRemito.forEach(detalle => {
+        detalleBody.innerHTML = '';
+        detalleRemito.forEach(detalle => {
         const newRow = document.createElement('tr');
         newRow.dataset.id = detalle.producto__id;
         newRow.innerHTML = `
@@ -248,20 +248,23 @@
                 .then(data => {
                     productResults.innerHTML = '';
                     data.productos.forEach(producto => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${producto.id}</td>
-                            <td>${producto.descripcion}</td>
-                            <td>
-                                <button type="button" class="btn btn-primary btn-sm select-product" 
-                                        data-id="${producto.id}" 
-                                        data-descripcion="${producto.descripcion}">
-                                    Seleccionar
-                                </button>
-                            </td>
-                        `;
-                        productResults.appendChild(row);
-                    });
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${producto.id}</td>
+                        <td>${producto.descripcion}</td>
+                        <td>
+                            <button type="button" class="btn btn-primary btn-sm select-product" 
+                                    data-id="${producto.id}" 
+                                    data-descripcion="${producto.descripcion}" 
+                                    data-loc-dep-id="${producto.loc_dep.id || ''}" 
+                                    data-loc-dep-descripcion="${producto.loc_dep.descripcion || 'Sin Depósito'}">
+                                Seleccionar
+                            </button>
+                        </td>
+                    `;
+                    productResults.appendChild(row);
+                });
+
                 });
             }
         });
@@ -270,16 +273,19 @@
     if (e.target.classList.contains('select-product')) {
         const id = e.target.dataset.id;
         const descripcion = e.target.dataset.descripcion;
+        const locDepId = e.target.dataset.locDepId; // ID del depósito asociado al producto
+        const locDepDescripcion = e.target.dataset.locDepDescripcion; // Descripción del depósito
         const tipoRemito = tipoRemitoField.value;
-        const columnas = columnasPorTipo[tipoRemito];
 
         if (Array.from(detalleBody.querySelectorAll('tr')).some(row => row.dataset.id === id)) {
             alert('El producto ya está agregado.');
             return;
         }
 
+        const columnas = columnasPorTipo[tipoRemito];
         const newRow = document.createElement('tr');
         newRow.dataset.id = id;
+
         newRow.innerHTML = `
             <td>${id}</td>
             <td>${descripcion}</td>
@@ -288,7 +294,9 @@
                     <select name="dep_origen" class="form-control">
                         <option value="">Seleccionar</option>
                         ${depositos.map(deposito => `
-                            <option value="${deposito.id}">${deposito.descripcion}</option>
+                            <option value="${deposito.id}" ${deposito.id == locDepId ? 'selected' : ''}>
+                                ${deposito.descripcion}
+                            </option>
                         `).join('')}
                     </select>
                 </td>
@@ -298,7 +306,9 @@
                     <select name="dep_destino" class="form-control">
                         <option value="">Seleccionar</option>
                         ${depositos.map(deposito => `
-                            <option value="${deposito.id}">${deposito.descripcion}</option>
+                            <option value="${deposito.id}" ${deposito.id == locDepId ? 'selected' : ''}>
+                                ${deposito.descripcion}
+                            </option>
                         `).join('')}
                     </select>
                 </td>
@@ -338,7 +348,7 @@
                 const depOrigen = row.querySelector('[name="dep_origen"]')?.value || null;
                 const depDestino = row.querySelector('[name="dep_destino"]')?.value || null;
                 const cantidad = row.querySelector('[name="cantidad"]').value;
-                const precioUnit = row.querySelector('[name="precio_unit"]').value;
+                const precioUnit = row.querySelector('[name="precio_unit"]')?.value || 0;;
 
                 detalles.push({ id, dep_origen: depOrigen, dep_destino: depDestino, cantidad, precio_unit: precioUnit });
             });

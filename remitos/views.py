@@ -166,24 +166,24 @@ class RemitoCreateView(CreateView):
                         dep_origen_id = detalle.get('dep_origen')
                         dep_destino_id = detalle.get('dep_destino')
                         cantidad = detalle.get('cantidad')
-                        precio_unit = detalle.get('precio_unit')
+                        precio_unit = detalle.get('precio_unit') or 0  # Si está vacío, asignar 0
 
-                        # Verificar campos requeridos
-                        if not producto_id or not cantidad or not precio_unit:
+                        # Verificar campos requeridos (sin validar precio_unit como obligatorio)
+                        if not producto_id or not cantidad:
                             raise ValueError(f"Datos incompletos en detalle: {detalle}")
 
                         producto = Producto.objects.get(id=producto_id)
 
                         # Asignar depósitos automáticamente según tipo de remito
                         dep_origen = (
-                            Deposito.objects.get_or_create(descripcion="Compras")[0]
-                            if tipo_remito == "compra"
-                            else Deposito.objects.get(id=dep_origen_id) if dep_origen_id else None
+                            Deposito.objects.get(id=dep_origen_id)
+                            if dep_origen_id
+                            else None
                         )
                         dep_destino = (
-                            Deposito.objects.get_or_create(descripcion="Ventas")[0]
-                            if tipo_remito == "venta"
-                            else Deposito.objects.get(id=dep_destino_id) if dep_destino_id else None
+                            Deposito.objects.get(id=dep_destino_id)
+                            if dep_destino_id
+                            else None
                         )
 
                         DetalleRemito.objects.create(
@@ -205,6 +205,7 @@ class RemitoCreateView(CreateView):
         # Almacenar el path del PDF para el template
         self.pdf_path = pdf_path
         return redirect(self.get_success_url())
+
 
     def get_success_url(self):
         if hasattr(self, 'pdf_path'):
@@ -240,7 +241,7 @@ class RemitoUpdateView(UpdateView):
                         dep_origen_id = detalle.get('dep_origen')
                         dep_destino_id = detalle.get('dep_destino')
                         cantidad = detalle.get('cantidad')
-                        precio_unit = detalle.get('precio_unit')
+                        precio_unit = detalle.get('precio_unit') or 0  # Si está vacío, asignar 0
 
                         # Verificar campos requeridos
                         if not producto_id or not cantidad or not precio_unit:

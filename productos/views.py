@@ -27,18 +27,25 @@ def buscar_producto(request):
                 q_filter &= models.Q(descripcion__icontains=palabra) | models.Q(barcode__icontains=palabra)
 
             # Filtra productos utilizando el filtro compuesto
-            productos = Producto.objects.filter(q_filter) # Limitar resultados a 10 para evitar sobrecarga
+            productos = Producto.objects.filter(q_filter)[:10]  # Limitar resultados a 10 para evitar sobrecarga
 
-            # Incluye el `id` de los productos en el resultado
+            # Incluye el `id`, `descripcion`, `barcode` y el `loc_dep` en el resultado
             resultado = [
-                {'id': p.id, 'barcode': p.barcode, 'descripcion': p.descripcion}
+                {
+                    'id': p.id,
+                    'barcode': p.barcode,
+                    'descripcion': p.descripcion,
+                    'loc_dep': {
+                        'id': p.loc_dep.id if p.loc_dep else None,
+                        'descripcion': p.loc_dep.descripcion if p.loc_dep else 'Sin Depósito'
+                    }
+                }
                 for p in productos
             ]
             return JsonResponse({'productos': resultado})
 
         return JsonResponse({'productos': []})
     return JsonResponse({'error': 'Método no permitido'}, status=405)
-
 
 @csrf_exempt
 def buscar_google(request):
