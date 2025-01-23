@@ -2,11 +2,14 @@ from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from stock.models import Deposito, Pasillo, Columna, Estante
-from .models import Producto
-from .forms import ProductoForm
+from .models import Marca, Unidad, Sinonimo
+from .forms import MarcaForm, UnidadForm, SinonimoForm
+from .models import Producto, IDTipo1, IDTipo2, DesConcatenada
+from .forms import ProductoForm, IDTipo1Form, IDTipo2Form, DesConcatenadaForm
 from django.db import models
 import requests
 import re
+from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -170,3 +173,208 @@ class ProductoDeleteView(DeleteView):
 
     def get_success_url(self):
         return reverse_lazy('producto_list')
+
+
+# Vistas para Marcas
+class MarcaListView(ListView):
+    model = Marca
+    template_name = 'productos/marca_list.html'
+    context_object_name = 'marcas'
+
+class MarcaCreateView(CreateView):
+    model = Marca
+    form_class = MarcaForm
+    template_name = 'productos/marca_form.html'
+    success_url = reverse_lazy('marca_list')
+
+class MarcaUpdateView(UpdateView):
+    model = Marca
+    form_class = MarcaForm
+    template_name = 'productos/marca_form.html'
+    success_url = reverse_lazy('marca_list')
+
+class MarcaDeleteView(DeleteView):
+    model = Marca
+    template_name = 'confirm_delete.html'
+    success_url = reverse_lazy('marca_list')
+
+# Vistas para Unidades
+class UnidadListView(ListView):
+    model = Unidad
+    template_name = 'productos/unidad_list.html'
+    context_object_name = 'unidades'
+
+class UnidadCreateView(CreateView):
+    model = Unidad
+    form_class = UnidadForm
+    template_name = 'productos/unidad_form.html'
+    success_url = reverse_lazy('unidad_list')
+
+class UnidadUpdateView(UpdateView):
+    model = Unidad
+    form_class = UnidadForm
+    template_name = 'productos/unidad_form.html'
+    success_url = reverse_lazy('unidad_list')
+
+class UnidadDeleteView(DeleteView):
+    model = Unidad
+    template_name = 'confirm_delete.html'
+    success_url = reverse_lazy('unidad_list')
+
+# Vistas para Sinónimos
+class SinonimoListView(ListView):
+    model = Sinonimo
+    template_name = 'productos/sinonimo_list.html'
+    context_object_name = 'sinonimos'
+
+class SinonimoCreateView(CreateView):
+    model = Sinonimo
+    form_class = SinonimoForm
+    template_name = 'productos/sinonimo_form.html'
+    success_url = reverse_lazy('sinonimo_list')
+
+class SinonimoUpdateView(UpdateView):
+    model = Sinonimo
+    form_class = SinonimoForm
+    template_name = 'productos/sinonimo_form.html'
+    success_url = reverse_lazy('sinonimo_list')
+
+class SinonimoDeleteView(DeleteView):
+    model = Sinonimo
+    template_name = 'confirm_delete.html'
+    success_url = reverse_lazy('sinonimo_list')
+
+
+def sinonimo_autocomplete(request):
+    term = request.GET.get('term', '')
+    sinonimos = Sinonimo.objects.filter(descripcion__icontains=term).values_list('descripcion', flat=True)
+    return JsonResponse(list(sinonimos), safe=False)
+
+
+class IDTipo1ListView(ListView):
+    model = IDTipo1
+    template_name = 'productos/idtipo1_list.html'
+    context_object_name = 'idtipo1_list'
+
+class IDTipo1CreateView(CreateView):
+    model = IDTipo1
+    form_class = IDTipo1Form
+    template_name = 'productos/idtipo1_form.html'
+    success_url = reverse_lazy('idtipo1_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['attribute_fields'] = [
+            field for field in self.get_form() if field.name.startswith('atributo')
+        ]
+        return context
+    
+    def form_valid(self, form):
+        # Guarda la instancia y procesa los sinónimos
+        form.save()
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        # Redirige a la lista de IDTipo1
+        return reverse_lazy('idtipo1_list')
+
+class IDTipo1UpdateView(UpdateView):
+    model = IDTipo1
+    form_class = IDTipo1Form
+    template_name = 'productos/idtipo1_form.html'
+    success_url = reverse_lazy('idtipo1_list')
+
+class IDTipo1DeleteView(DeleteView):
+    model = IDTipo1
+    template_name = 'confirm_delete.html'
+    success_url = reverse_lazy('idtipo1_list')
+
+
+# Listar IDTipo2
+class IDTipo2ListView(ListView):
+    model = IDTipo2
+    template_name = 'productos/idtipo2_list.html'
+    context_object_name = 'idtipo2_list'
+
+# Crear IDTipo2
+class IDTipo2CreateView(CreateView):
+    model = IDTipo2
+    form_class = IDTipo2Form
+    template_name = 'productos/idtipo2_form.html'
+    success_url = reverse_lazy('idtipo2_list')
+
+# Editar IDTipo2
+class IDTipo2UpdateView(UpdateView):
+    model = IDTipo2
+    form_class = IDTipo2Form
+    template_name = 'productos/idtipo2_form.html'
+    success_url = reverse_lazy('idtipo2_list')
+
+# Eliminar IDTipo2
+class IDTipo2DeleteView(DeleteView):
+    model = IDTipo2
+    template_name = 'confirm_delete.html'
+    success_url = reverse_lazy('idtipo2_list')
+
+# Listar DesConcatenada para un producto
+class DesConcatenadaListView(ListView):
+    model = DesConcatenada
+    template_name = 'productos/desconcatenada_list.html'
+    context_object_name = 'atributos'
+
+    def get_queryset(self):
+        producto_id = self.kwargs['producto_id']
+        return DesConcatenada.objects.filter(producto_id=producto_id)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['producto'] = get_object_or_404(Producto, id=self.kwargs['producto_id'])
+        return context
+
+# Crear DesConcatenada
+class DesConcatenadaCreateView(CreateView):
+    model = DesConcatenada
+    form_class = DesConcatenadaForm
+    template_name = 'productos/desconcatenada_form.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        producto_id = self.kwargs['producto_id']
+        # Verifica si ya existe un atributo para este producto
+        if DesConcatenada.objects.filter(producto_id=producto_id).exists():
+            atributo = DesConcatenada.objects.get(producto_id=producto_id)
+            return redirect('desconcatenada_update', pk=atributo.id)
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        producto = get_object_or_404(Producto, id=self.kwargs['producto_id'])
+        form.instance.producto = producto
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('desconcatenada_list', kwargs={'producto_id': self.kwargs['producto_id']})
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        producto = get_object_or_404(Producto, id=self.kwargs['producto_id'])
+        kwargs['producto'] = producto
+        return kwargs
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['producto'] = get_object_or_404(Producto, id=self.kwargs['producto_id'])
+        return context
+
+
+# Editar DesConcatenada
+class DesConcatenadaUpdateView(UpdateView):
+    model = DesConcatenada
+    form_class = DesConcatenadaForm
+    template_name = 'productos/desconcatenada_form.html'
+
+    def get_success_url(self):
+        return reverse_lazy('desconcatenada_list', kwargs={'producto_id': self.object.producto.id})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['producto'] = get_object_or_404(Producto, id=self.kwargs['producto_id'])
+        return context

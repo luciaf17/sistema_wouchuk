@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if object %}Editar Atributo{% else %}Crear Atributo{% endif %} para el Producto: {{ producto.descripcion }}</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_IDtipo1" class="form-label">Grupo (IDTipo1)</label>
+            {{ form.IDtipo1 }}
+        </div>
+        <div class="mb-3">
+            <label for="id_IDtipo2" class="form-label">Subgrupo (IDTipo2)</label>
+            {{ form.IDtipo2 }}
+        </div>
+        <h4>Atributos</h4>
+        <div class="mb-3">
+            <label class="form-label">Nombres de los atributos:</label>
+            {{ form.atributo_nombres }}
+        </div>
+        {% for field in form %}
+            {% if "atributo" in field.name %}
+            <div class="mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+            </div>
+            {% endif %}
+        {% endfor %}
+        <div class="mb-3">
+            <label for="id_marca" class="form-label">Marca</label>
+            {{ form.marca }}
+        </div>
+        <div class="mb-3">
+            <label for="id_unidad" class="form-label">Unidad</label>
+            {{ form.unidad }}
+        </div>
+        <button type="submit" class="btn btn-success">Guardar</button>
+        <a href="{% url 'desconcatenada_list' producto.id %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

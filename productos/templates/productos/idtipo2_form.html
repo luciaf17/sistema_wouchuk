@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if object %}Editar Subgrupo (IDTipo2){% else %}Crear Nuevo Subgrupo (IDTipo2){% endif %}</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_descripcion" class="form-label">Descripción</label>
+            {{ form.descripcion }}
+        </div>
+        <div class="mb-3">
+            <label for="id_IDtipo1" class="form-label">Grupo (IDTipo1)</label>
+            {{ form.IDtipo1 }}
+        </div>
+        <div class="mb-3">
+            <label for="id_cod_alpha" class="form-label">Código Alfanumérico</label>
+            {{ form.cod_alpha }}
+        </div>
+        <div class="form-buttons">
+            <button type="submit" class="btn btn-success">Guardar</button>
+            <a href="{% url 'idtipo2_list' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

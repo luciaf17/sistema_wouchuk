@@ -13,3 +13,79 @@ class Producto(AuditModel):
 
     def __str__(self):
         return self.descripcion
+    
+# Modelo para Marcas
+class Marca(models.Model):
+    descripcion = models.TextField()
+
+    def __str__(self):
+        return self.descripcion
+
+# Modelo para Unidades
+class Unidad(models.Model):
+    descripcion = models.TextField()
+    abreviatura = models.CharField(max_length=3)  # New field for abbreviation
+
+    def __str__(self):
+        return f"{self.descripcion} ({self.abreviatura})" if self.abreviatura else self.descripcion
+
+
+class Sinonimo(models.Model):
+    descripcion = models.TextField()
+    idtipo1 = models.ForeignKey('IDTipo1', on_delete=models.CASCADE, related_name='sinonimos')  # Relación uno a muchos
+
+    def __str__(self):
+        return self.descripcion
+
+
+class IDTipo1(models.Model):
+    descripcion = models.TextField()
+    IDtipo2 = models.TextField()
+    atributo1 = models.TextField(null=True, blank=True)
+    atributo2 = models.TextField(null=True, blank=True)
+    atributo3 = models.TextField(null=True, blank=True)
+    atributo4 = models.TextField(null=True, blank=True)
+    atributo5 = models.TextField(null=True, blank=True)
+    pre1 = models.TextField(null=True, blank=True)
+    pre2 = models.TextField(null=True, blank=True)
+    pre3 = models.TextField(null=True, blank=True)
+    pre4 = models.TextField(null=True, blank=True)
+    pre5 = models.TextField(null=True, blank=True)
+    suf1 = models.TextField(null=True, blank=True)
+    suf2 = models.TextField(null=True, blank=True)
+    suf3 = models.TextField(null=True, blank=True)
+    suf4 = models.TextField(null=True, blank=True)
+    suf5 = models.TextField(null=True, blank=True)
+    cod_alpha = models.CharField(max_length=3, unique=True)
+
+    def __str__(self):
+        return self.descripcion
+
+
+# Modelo para IDTipo2
+class IDTipo2(models.Model):
+    descripcion = models.TextField()
+    IDtipo1 = models.ForeignKey(IDTipo1, on_delete=models.CASCADE, related_name='IDTIPO2')
+    cod_alpha = models.CharField(max_length=3, unique=True)  # Cambiado a CharField
+
+    def __str__(self):
+        # Genera automáticamente "Cab - HEX" (si IDtipo1 tiene un valor en idtipo2)
+        return f"{self.IDtipo1.idtipo2}: {self.descripcion}" if self.IDtipo1.idtipo2 else self.descripcion
+
+
+# Modelo para DesConcatenada
+class DesConcatenada(models.Model):
+    producto = models.ForeignKey('Producto', on_delete=models.CASCADE)
+    IDtipo1 = models.ForeignKey(IDTipo1, on_delete=models.CASCADE)
+    IDtipo2 = models.ForeignKey(IDTipo2, on_delete=models.CASCADE)
+    atributo1 = models.TextField(null=True, blank=True)
+    atributo2 = models.TextField(null=True, blank=True)
+    atributo3 = models.TextField(null=True, blank=True)
+    atributo4 = models.TextField(null=True, blank=True)
+    atributo5 = models.TextField(null=True, blank=True)
+    marca = models.ForeignKey(Marca, on_delete=models.CASCADE)
+    unidad = models.ForeignKey(Unidad, on_delete=models.CASCADE)
+    cod_alpha = models.CharField(max_length=3, unique=True)  # Cambiado a CharField
+
+    def __str__(self):
+        return f"{self.producto} - {self.IDtipo1} - {self.IDtipo2}"

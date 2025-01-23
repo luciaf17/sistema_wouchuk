@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Lista de Subgrupos (IDTipo2)</h2>
+    <a href="{% url 'idtipo2_create' %}" class="btn btn-success mb-3">Agregar Nuevo Subgrupo</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Descripción</th>
+                <th>Grupo (IDTipo1)</th>
+                <th>Código Alfanumérico</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in idtipo2_list %}
+            <tr>
+                <td>{{ item.id }}</td>
+                <td>{{ item.descripcion }}</td>
+                <td>{{ item.IDtipo1.descripcion }}</td>
+                <td>{{ item.cod_alpha }}</td>
+                <td>
+                    <a href="{% url 'idtipo2_update' item.id %}" class="btn btn-warning btn-sm">Editar</a>
+                    <a href="{% url 'idtipo2_delete' item.id %}" class="btn btn-danger btn-sm">Eliminar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">No se encontraron registros</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

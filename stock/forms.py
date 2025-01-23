@@ -6,7 +6,13 @@ class BaseForm(forms.ModelForm):
     def clean_descripcion(self):
         descripcion = self.cleaned_data['descripcion']
         model = self.Meta.model
-        if model.objects.filter(descripcion=descripcion).exists():
+        
+        # Excluir la instancia actual al validar unicidad
+        queryset = model.objects.filter(descripcion=descripcion)
+        if self.instance.pk:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        
+        if queryset.exists():
             raise forms.ValidationError(f"Ya existe un registro con la descripción '{descripcion}'.")
         return descripcion
 

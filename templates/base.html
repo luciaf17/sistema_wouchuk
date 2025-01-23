@@ -90,9 +90,35 @@
                                     Crear Producto
                                 </a>
                             </li>
+                            <li>
+                                <a class="nav-link text-white {% if 'unidad' in request.path %}active{% endif %}" href="{% url 'unidad_list' %}">
+                                    Unidades
+                                </a>
+                            </li>
+                            <li>
+                                <a class="nav-link text-white {% if 'marca' in request.path %}active{% endif %}" href="{% url 'marca_list' %}">
+                                    Marcas
+                                </a>
+                            </li>
+                            <li>
+                                <a class="nav-link text-white {% if 'sinonimo' in request.path %}active{% endif %}" href="{% url 'sinonimo_list' %}">
+                                    Sinónimos
+                                </a>
+                            </li>
+                            <li>
+                                <a class="nav-link text-white {% if 'idtipo1' in request.path %}active{% endif %}" href="{% url 'idtipo1_list' %}">
+                                    IDTipo1
+                                </a>
+                            </li>
+                            <li>
+                                <a class="nav-link text-white {% if 'idtipo2' in request.path %}active{% endif %}" href="{% url 'idtipo2_list' %}">
+                                    IDTipo2
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </li>
+
                 
                 <!-- Remitos -->
                 <li class="nav-item">

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Listado de IDTipo1</h2>
+    <a href="{% url 'idtipo1_create' %}" class="btn btn-success mb-3">Crear Nuevo IDTipo1</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Descripción</th>
+                <th>Cod Alpha</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for idtipo1 in idtipo1_list %}
+            <tr>
+                <td>{{ idtipo1.id }}</td>
+                <td>{{ idtipo1.descripcion }}</td>
+                <td>{{ idtipo1.cod_alpha }}</td>
+                <td>
+                    <a href="{% url 'idtipo1_update' idtipo1.id %}" class="btn btn-warning btn-sm">Editar</a>
+                    <a href="{% url 'idtipo1_delete' idtipo1.id %}" class="btn btn-danger btn-sm">Eliminar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">No se encontraron registros</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

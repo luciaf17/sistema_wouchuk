@@ -80,7 +80,12 @@
                 <td>
                     <a href="{% url 'producto_update' producto.id %}" class="btn btn-warning btn-sm">Editar</a>
                     <a href="{% url 'producto_delete' producto.id %}" class="btn btn-danger btn-sm">Eliminar</a>
-                </td>
+                    {% if producto.id %}
+                        <a href="{% url 'desconcatenada_list' producto.id %}" class="btn btn-info btn-sm">Ver Atributos</a>
+                    {% else %}
+                        <span class="text-muted">Sin Atributos</span>
+                    {% endif %}
+                </td>                
             </tr>
             {% empty %}
             <tr>

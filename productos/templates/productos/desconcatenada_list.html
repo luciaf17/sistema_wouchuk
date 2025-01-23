@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Atributos para el Producto: {{ producto.descripcion }}</h2>
+    {% if atributos|length > 0 %}
+        <a href="{% url 'desconcatenada_update' atributos.0.id %}" class="btn btn-warning mb-3">Editar Atributo</a>
+    {% else %}
+        <a href="{% url 'desconcatenada_create' producto.id %}" class="btn btn-success mb-3">Agregar Atributo</a>
+    {% endif %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>IDTipo1</th>
+                <th>IDTipo2</th>
+                <th>Atributos</th>
+                <th>Marca</th>
+                <th>Unidad</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for atributo in atributos %}
+            <tr>
+                <td>{{ atributo.id }}</td>
+                <td>{{ atributo.IDtipo1 }}</td>
+                <td>{{ atributo.IDtipo2 }}</td>
+                <td>
+                    {{ atributo.atributo1 }}, {{ atributo.atributo2 }}, {{ atributo.atributo3 }},
+                    {{ atributo.atributo4 }}, {{ atributo.atributo5 }}
+                </td>
+                <td>{{ atributo.marca }}</td>
+                <td>{{ atributo.unidad }}</td>
+                <td>
+                    <a href="{% url 'desconcatenada_update' atributo.id %}" class="btn btn-warning btn-sm">Editar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center">No se encontraron atributos para este producto</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if object %}Editar Unidad{% else %}Crear Nueva Unidad{% endif %}</h2>
+    <form method="post" class="form">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_descripcion" class="form-label">Descripción</label>
+            {{ form.descripcion }}
+        </div>
+        <div class="mb-3">
+            <label for="id_abreviatura" class="form-label">Abreviatura</label>
+            {{ form.abreviatura }}
+        </div>
+        <div class="form-buttons">
+            <button type="submit" class="btn btn-success">Guardar</button>
+            <a href="{% url 'unidad_list' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
