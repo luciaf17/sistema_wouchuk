@@ -250,6 +250,16 @@ def sinonimo_autocomplete(request):
     sinonimos = Sinonimo.objects.filter(descripcion__icontains=term).values_list('descripcion', flat=True)
     return JsonResponse(list(sinonimos), safe=False)
 
+def atributo_autocomplete(request):
+    term = request.GET.get('term', '')
+    atributos = set()
+    for i in range(1, 6):  # Itera por atributo1 a atributo5
+        field = f"atributo{i}"
+        atributos.update(
+            IDTipo1.objects.filter(**{f"{field}__icontains": term}).values_list(field, flat=True)
+        )
+    return JsonResponse(list(atributos), safe=False)
+
 
 class IDTipo1ListView(ListView):
     model = IDTipo1
@@ -373,8 +383,34 @@ class DesConcatenadaUpdateView(UpdateView):
 
     def get_success_url(self):
         return reverse_lazy('desconcatenada_list', kwargs={'producto_id': self.object.producto.id})
-    
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['producto'] = self.object.producto
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['producto'] = get_object_or_404(Producto, id=self.kwargs['producto_id'])
+        try:
+            context['producto'] = self.object.producto
+        except AttributeError:
+            context['producto'] = None
         return context
+
+
+
+def idtipo2_list(request, idtipo1_id):
+    idtipo2 = IDTipo2.objects.filter(IDtipo1_id=idtipo1_id).values('id', 'descripcion')
+    return JsonResponse(list(idtipo2), safe=False)
+
+def atributos_list(request, idtipo1_id):
+    idtipo1 = get_object_or_404(IDTipo1, id=idtipo1_id)
+    atributos = [
+        idtipo1.atributo1, idtipo1.atributo2, idtipo1.atributo3,
+        idtipo1.atributo4, idtipo1.atributo5
+    ]
+    return JsonResponse([attr for attr in atributos if attr], safe=False)
+
+def idtipo1_detail(request, idtipo1_id):
+    idtipo1 = get_object_or_404(IDTipo1, id=idtipo1_id)
+    return JsonResponse({'idtipo2': idtipo1.IDtipo2})

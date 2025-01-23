@@ -1,8 +1,11 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
 <div class="container mt-4">
-    <h2>{% if object %}Editar IDTipo1{% else %}Crear Nuevo IDTipo1{% endif %}</h2>
+    <h2>{% if object %}Editar IDTipo1{% else %}Crear Nuevo Grupo{% endif %}</h2>
     <form method="post">
         {% csrf_token %}
         <div class="mb-3">
@@ -10,23 +13,13 @@
             {{ form.descripcion }}
         </div>
         <div class="mb-3">
-            <label for="id_IDtipo2" class="form-label">IDTipo2</label>
+            <label for="id_IDtipo2" class="form-label">Subgrupo</label>
             {{ form.IDtipo2 }}
         </div>
         <div class="mb-3">
             <label for="id_cod_alpha" class="form-label">Cod Alpha</label>
             {{ form.cod_alpha }}
         </div>
-        <h4>Atributos</h4>
-        <div class="row">
-            {% for field in attribute_fields %}
-            <div class="col-md-6 mb-3">
-                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                {{ field }}
-            </div>
-            {% endfor %}
-        </div>
-
         <h4>Sinónimos</h4>
         <div class="mb-3">
             <label for="id_sinonimos" class="form-label">Sinónimos</label>
@@ -34,17 +27,79 @@
             <small class="form-text text-muted">Escribe sinónimos separados por comas.</small>
         </div>
 
-        <h4>Prefijos y Sufijos</h4>
+        <h4>Atributos, Prefijos y Sufijos</h4>
         <div class="row">
-            {% for field in form %}
-                {% if field.name|slice:":3" == "pre" or field.name|slice:":3" == "suf" %}
-                <div class="col-md-6 mb-3">
-                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field }}
+            <div class="col-md-4">
+                <h5>Atributos</h5>
+                <div class="mb-3">
+                    <label for="id_atributo1" class="form-label">Atributo 1</label>
+                    {{ form.atributo1 }}
                 </div>
-                {% endif %}
-            {% endfor %}
+                <div class="mb-3">
+                    <label for="id_atributo2" class="form-label">Atributo 2</label>
+                    {{ form.atributo2 }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_atributo3" class="form-label">Atributo 3</label>
+                    {{ form.atributo3 }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_atributo4" class="form-label">Atributo 4</label>
+                    {{ form.atributo4 }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_atributo5" class="form-label">Atributo 5</label>
+                    {{ form.atributo5 }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <h5>Prefijos</h5>
+                <div class="mb-3">
+                    <label for="id_pre1" class="form-label">Prefijo 1</label>
+                    {{ form.pre1 }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_pre2" class="form-label">Prefijo 2</label>
+                    {{ form.pre2 }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_pre3" class="form-label">Prefijo 3</label>
+                    {{ form.pre3 }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_pre4" class="form-label">Prefijo 4</label>
+                    {{ form.pre4 }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_pre5" class="form-label">Prefijo 5</label>
+                    {{ form.pre5 }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <h5>Sufijos</h5>
+                <div class="mb-3">
+                    <label for="id_suf1" class="form-label">Sufijo 1</label>
+                    {{ form.suf1 }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_suf2" class="form-label">Sufijo 2</label>
+                    {{ form.suf2 }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_suf3" class="form-label">Sufijo 3</label>
+                    {{ form.suf3 }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_suf4" class="form-label">Sufijo 4</label>
+                    {{ form.suf4 }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_suf5" class="form-label">Sufijo 5</label>
+                    {{ form.suf5 }}
+                </div>
+            </div>
         </div>
+
         <div class="form-buttons">
             <button type="submit" class="btn btn-success">Guardar</button>
             <a href="{% url 'idtipo1_list' %}" class="btn btn-secondary">Cancelar</a>
@@ -52,21 +107,43 @@
     </form>
 </div>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const sinonimosInput = document.querySelector('#id_sinonimos');
-        const autocompleteUrl = sinonimosInput.dataset.autocompleteUrl;
+    $(document).ready(function () {
+    // Autocompletado para sinónimos
+    $('#id_sinonimos').autocomplete({
+        source: function (request, response) {
+            $.ajax({
+                url: $('#id_sinonimos').data('autocomplete-url'),
+                dataType: 'json',
+                data: {
+                    term: request.term
+                },
+                success: function (data) {
+                    response(data);
+                }
+            });
+        },
+        minLength: 2
+    });
 
-        sinonimosInput.addEventListener('input', async function () {
-            const query = this.value;
-            if (query.length < 2) return;
-
-            const response = await fetch(`${autocompleteUrl}?term=${query}`);
-            const suggestions = await response.json();
-
-            // Muestra sugerencias
-            // Puedes usar una librería como jQuery UI Autocomplete o implementar tu propia lógica para mostrar las opciones.
+    // Autocompletado para los atributos
+    $('input[data-autocomplete-url]').each(function () {
+        $(this).autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: $(this.element).data('autocomplete-url'),
+                    dataType: 'json',
+                    data: {
+                        term: request.term
+                    },
+                    success: function (data) {
+                        response(data);
+                    }
+                });
+            },
+            minLength: 2
         });
     });
+});
 </script>
 
 {% endblock %}

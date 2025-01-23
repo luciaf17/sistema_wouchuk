@@ -81,6 +81,22 @@ class IDTipo1Form(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
+            # Cargar atributos, prefijos y sufijos en caso de edición
+            self.fields['atributo1'].initial = self.instance.atributo1
+            self.fields['atributo2'].initial = self.instance.atributo2
+            self.fields['atributo3'].initial = self.instance.atributo3
+            self.fields['atributo4'].initial = self.instance.atributo4
+            self.fields['atributo5'].initial = self.instance.atributo5
+            self.fields['pre1'].initial = self.instance.pre1
+            self.fields['pre2'].initial = self.instance.pre2
+            self.fields['pre3'].initial = self.instance.pre3
+            self.fields['pre4'].initial = self.instance.pre4
+            self.fields['pre5'].initial = self.instance.pre5
+            self.fields['suf1'].initial = self.instance.suf1
+            self.fields['suf2'].initial = self.instance.suf2
+            self.fields['suf3'].initial = self.instance.suf3
+            self.fields['suf4'].initial = self.instance.suf4
+            self.fields['suf5'].initial = self.instance.suf5
             # Si se está editando, carga los sinónimos existentes
             sinonimos = Sinonimo.objects.filter(idtipo1=self.instance).values_list('descripcion', flat=True)
             self.fields['sinonimos'].initial = ', '.join(sinonimos)
@@ -104,11 +120,11 @@ class IDTipo1Form(forms.ModelForm):
         widgets = {
             'descripcion': forms.TextInput(attrs={'class': 'form-control'}),
             'IDtipo2': forms.TextInput(attrs={'class': 'form-control'}),
-            'atributo1': forms.TextInput(attrs={'class': 'form-control'}),
-            'atributo2': forms.TextInput(attrs={'class': 'form-control'}),
-            'atributo3': forms.TextInput(attrs={'class': 'form-control'}),
-            'atributo4': forms.TextInput(attrs={'class': 'form-control'}),
-            'atributo5': forms.TextInput(attrs={'class': 'form-control'}),
+            'atributo1': forms.TextInput(attrs={'class': 'form-control', 'data-autocomplete-url': reverse_lazy('atributo_autocomplete')}),
+            'atributo2': forms.TextInput(attrs={'class': 'form-control', 'data-autocomplete-url': reverse_lazy('atributo_autocomplete')}),
+            'atributo3': forms.TextInput(attrs={'class': 'form-control', 'data-autocomplete-url': reverse_lazy('atributo_autocomplete')}),
+            'atributo4': forms.TextInput(attrs={'class': 'form-control', 'data-autocomplete-url': reverse_lazy('atributo_autocomplete')}),
+            'atributo5': forms.TextInput(attrs={'class': 'form-control', 'data-autocomplete-url': reverse_lazy('atributo_autocomplete')}),
             'pre1': forms.TextInput(attrs={'class': 'form-control'}),
             'pre2': forms.TextInput(attrs={'class': 'form-control'}),
             'pre3': forms.TextInput(attrs={'class': 'form-control'}),
@@ -158,18 +174,12 @@ class IDTipo2Form(forms.ModelForm):
         self.fields['IDtipo1'].queryset = IDTipo1.objects.all()  # Asegura que muestre todos los grupos disponibles
 
 class DesConcatenadaForm(forms.ModelForm):
-    atributo_nombres = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={
-            'readonly': 'readonly',
-            'class': 'form-control',
-            'placeholder': 'Atributos asociados al IDTipo1 seleccionado'
-        })
-    )
-
     class Meta:
         model = DesConcatenada
-        fields = ['IDtipo1', 'IDtipo2', 'atributo1', 'atributo2', 'atributo3', 'atributo4', 'atributo5', 'marca', 'unidad']
+        fields = [
+            'IDtipo1', 'IDtipo2', 'atributo1', 'atributo2', 'atributo3',
+            'atributo4', 'atributo5', 'marca', 'unidad'
+        ]
         widgets = {
             'IDtipo1': forms.Select(attrs={'class': 'form-control'}),
             'IDtipo2': forms.Select(attrs={'class': 'form-control'}),
@@ -180,23 +190,26 @@ class DesConcatenadaForm(forms.ModelForm):
             'atributo5': forms.TextInput(attrs={'class': 'form-control'}),
             'marca': forms.Select(attrs={'class': 'form-control'}),
             'unidad': forms.Select(attrs={'class': 'form-control'}),
+            'cod_alpha': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
         }
 
     def __init__(self, *args, **kwargs):
         producto = kwargs.pop('producto', None)
         super().__init__(*args, **kwargs)
 
-        # Mostrar información del producto
-        if producto:
-            self.fields['producto_info'] = forms.CharField(
-                initial=f"Crear atributos para el producto: {producto.descripcion}",
-                widget=forms.TextInput(attrs={
-                    'class': 'form-control',
-                    'readonly': 'readonly'
-                })
-            )
+        # Prellenar cod_alpha si ya existe
+        if self.instance and self.instance.pk:
+            self.fields['cod_alpha'].initial = self.instance.cod_alpha
 
-        # Filtrar IDtipo2 según el IDtipo1 seleccionado
+        # Opcional: Puedes usar 'producto' para personalizar el formulario
+        if producto:
+            self.fields['IDtipo1'].label = f"Grupo para {producto.descripcion}"
+
+         # Prellenar cod_alpha si ya existe
+        if self.instance and self.instance.pk:
+            self.fields['cod_alpha'].initial = self.instance.cod_alpha
+
+        # Filtrar dinámicamente los IDTipo2 relacionados al IDTipo1 seleccionado
         if 'IDtipo1' in self.data:
             try:
                 idtipo1_id = int(self.data.get('IDtipo1'))
@@ -208,22 +221,25 @@ class DesConcatenadaForm(forms.ModelForm):
         else:
             self.fields['IDtipo2'].queryset = IDTipo2.objects.none()
 
-        # Mostrar nombres de los atributos asociados al IDtipo1 seleccionado
+        # Cambiar los labels de los atributos para reflejar los nombres definidos en IDTipo1
         if 'IDtipo1' in self.data:
             try:
                 idtipo1 = IDTipo1.objects.get(id=self.data.get('IDtipo1'))
-                atributos = [idtipo1.atributo1, idtipo1.atributo2, idtipo1.atributo3, idtipo1.atributo4, idtipo1.atributo5]
-                self.fields['atributo_nombres'].initial = ', '.join([attr for attr in atributos if attr])
+                atributos = [
+                    idtipo1.atributo1, idtipo1.atributo2, idtipo1.atributo3,
+                    idtipo1.atributo4, idtipo1.atributo5
+                ]
+                for i, atributo in enumerate(atributos, start=1):
+                    if atributo:
+                        self.fields[f'atributo{i}'].label = atributo
             except IDTipo1.DoesNotExist:
-                self.fields['atributo_nombres'].initial = ''
-        elif self.instance.pk and self.instance.IDtipo1:
+                pass
+        elif self.instance.pk:
             atributos = [
-                self.instance.IDtipo1.atributo1,
-                self.instance.IDtipo1.atributo2,
-                self.instance.IDtipo1.atributo3,
-                self.instance.IDtipo1.atributo4,
-                self.instance.IDtipo1.atributo5,
+                self.instance.IDtipo1.atributo1, self.instance.IDtipo1.atributo2,
+                self.instance.IDtipo1.atributo3, self.instance.IDtipo1.atributo4,
+                self.instance.IDtipo1.atributo5
             ]
-            self.fields['atributo_nombres'].initial = ', '.join([attr for attr in atributos if attr])
-        else:
-            self.fields['atributo_nombres'].initial = ''
+            for i, atributo in enumerate(atributos, start=1):
+                if atributo:
+                    self.fields[f'atributo{i}'].label = atributo

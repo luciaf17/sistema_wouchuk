@@ -4,9 +4,9 @@ from .views import (
     MarcaListView, MarcaCreateView, MarcaUpdateView, MarcaDeleteView,
     UnidadListView, UnidadCreateView, UnidadUpdateView, UnidadDeleteView,
     SinonimoListView, SinonimoCreateView, SinonimoUpdateView, SinonimoDeleteView, sinonimo_autocomplete,
-    IDTipo1ListView, IDTipo1CreateView, IDTipo1UpdateView, IDTipo1DeleteView, 
-    IDTipo2ListView, IDTipo2CreateView, IDTipo2UpdateView, IDTipo2DeleteView,
-    DesConcatenadaListView, DesConcatenadaCreateView, DesConcatenadaUpdateView
+    IDTipo1ListView, IDTipo1CreateView, IDTipo1UpdateView, IDTipo1DeleteView, idtipo1_detail,
+    IDTipo2ListView, IDTipo2CreateView, IDTipo2UpdateView, IDTipo2DeleteView,idtipo2_list, atributos_list,
+    DesConcatenadaListView, DesConcatenadaCreateView, DesConcatenadaUpdateView, atributo_autocomplete,
 )
 
 urlpatterns = [
@@ -40,14 +40,18 @@ urlpatterns = [
     path('idtipo1/<int:pk>/update/', IDTipo1UpdateView.as_view(), name='idtipo1_update'),
     path('idtipo1/<int:pk>/delete/', IDTipo1DeleteView.as_view(), name='idtipo1_delete'),
     path('sinonimos/autocomplete/', sinonimo_autocomplete, name='sinonimo_autocomplete'),
+    path('idtipo1/<int:idtipo1_id>/', idtipo1_detail, name='idtipo1_detail'),
 
     path('idtipo2/', IDTipo2ListView.as_view(), name='idtipo2_list'),
     path('idtipo2/crear/', IDTipo2CreateView.as_view(), name='idtipo2_create'),
     path('idtipo2/editar/<int:pk>/', IDTipo2UpdateView.as_view(), name='idtipo2_update'),
     path('idtipo2/eliminar/<int:pk>/', IDTipo2DeleteView.as_view(), name='idtipo2_delete'),
+    path('idtipo2/<int:idtipo1_id>/', idtipo2_list, name='idtipo2_list'),
+    path('atributos/<int:idtipo1_id>/', atributos_list, name='atributos_list'),
 
     path('productos/desconcatenada/<int:producto_id>/', DesConcatenadaListView.as_view(), name='desconcatenada_list'),
     path('productos/desconcatenada/<int:producto_id>/crear/', DesConcatenadaCreateView.as_view(), name='desconcatenada_create'),
     path('productos/desconcatenada/editar/<int:pk>/', DesConcatenadaUpdateView.as_view(), name='desconcatenada_update'),
+    path('atributo-autocomplete/', atributo_autocomplete, name='atributo_autocomplete'),
 
 ]

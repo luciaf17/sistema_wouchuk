@@ -85,7 +85,15 @@ class DesConcatenada(models.Model):
     atributo5 = models.TextField(null=True, blank=True)
     marca = models.ForeignKey(Marca, on_delete=models.CASCADE)
     unidad = models.ForeignKey(Unidad, on_delete=models.CASCADE)
-    cod_alpha = models.CharField(max_length=3, unique=True)  # Cambiado a CharField
+    cod_alpha = models.CharField(max_length=13, unique=True)  # Cambiado a CharField
+
+    def save(self, *args, **kwargs):
+        if not self.cod_alpha:
+            idtipo1_alpha = self.IDtipo1.cod_alpha if self.IDtipo1 else ''
+            idtipo2_alpha = self.IDtipo2.cod_alpha if self.IDtipo2 else ''
+            producto_id_padded = str(self.producto.id).zfill(7)
+            self.cod_alpha = f"{idtipo1_alpha}{idtipo2_alpha}{producto_id_padded}"
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.producto} - {self.IDtipo1} - {self.IDtipo2}"

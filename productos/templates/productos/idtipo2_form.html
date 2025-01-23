@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>{% if object %}Editar Subgrupo (IDTipo2){% else %}Crear Nuevo Subgrupo (IDTipo2){% endif %}</h2>
+    <h2>{% if object %}Editar Subgrupo{% else %}Crear Nuevo Subgrupo{% endif %}</h2>
     <form method="post">
         {% csrf_token %}
         <div class="mb-3">
