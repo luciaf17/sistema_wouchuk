@@ -10,7 +10,7 @@
             {{ form.IDtipo1 }}
         </div>
         <div class="mb-3">
-            <label for="id_IDtipo2" class="form-label">Subgrupo (IDTipo2)</label>
+            <label for="id_IDtipo2" class="form-label" data-selected="{{ form.IDtipo2.value }}">Subgrupo (IDTipo2)</label>
             {{ form.IDtipo2 }}
         </div>
         <h4>Atributos</h4>
@@ -32,8 +32,8 @@
         </div>
         <div class="mb-3">
             <label for="id_cod_alpha" class="form-label">Código Alpha</label>
-            {{ form.cod_alpha }}
-        </div>
+            <input type="text" id="id_cod_alpha" class="form-control" value="{{ form.initial.cod_alpha|default:'' }}" readonly>
+        </div>        
         <button type="submit" class="btn btn-success">Guardar</button>
         <a href="{% url 'desconcatenada_list' producto.id %}" class="btn btn-secondary">Cancelar</a>
     </form>
@@ -45,31 +45,9 @@
         const idTipo2Label = document.querySelector('label[for="id_IDtipo2"]'); // Selecciona el label de Subgrupo
         const attributeFields = ['id_atributo1', 'id_atributo2', 'id_atributo3', 'id_atributo4', 'id_atributo5'];
 
-        // Inicialmente ocultar Subgrupo y Atributos
-        idTipo2Field.parentElement.style.display = 'none';
-        attributeFields.forEach(fieldId => {
-            const field = document.getElementById(fieldId);
-            if (field) field.parentElement.style.display = 'none';
-        });
-
-        // Escuchar cambios en el campo IDTipo1
-        idTipo1Field.addEventListener('change', function () {
-            const idTipo1 = idTipo1Field.value;
-
+        // Función para cargar Subgrupo y Atributos
+        const cargarCampos = (idTipo1) => {
             if (idTipo1) {
-                // Actualizar el label de Subgrupo con el valor del campo idtipo2
-                fetch(`/productos/idtipo1/${idTipo1}/`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Error al obtener el label de Subgrupo: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        idTipo2Label.textContent = data.idtipo2; // Actualiza el label con el campo idtipo2
-                    })
-                    .catch(error => console.error(error));
-
                 // Mostrar Subgrupo y cargar opciones
                 idTipo2Field.parentElement.style.display = '';
                 fetch(`/productos/idtipo2/${idTipo1}/`)
@@ -87,14 +65,35 @@
                             opt.textContent = option.descripcion;
                             idTipo2Field.appendChild(opt);
                         });
+
+                        // Seleccionar el valor actual si existe
+                        const selectedValue = idTipo2Field.dataset.selected;
+                        if (selectedValue) {
+                            idTipo2Field.value = selectedValue;
+                        }
                     })
                     .catch(error => console.error(error));
 
-                // Ocultar atributos hasta seleccionar Subgrupo
-                attributeFields.forEach(fieldId => {
-                    const field = document.getElementById(fieldId);
-                    if (field) field.parentElement.style.display = 'none';
-                });
+                // Mostrar y cargar atributos asociados al Grupo
+                fetch(`/productos/atributos/${idTipo1}/`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Error en la solicitud de atributos: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        attributeFields.forEach((fieldId, index) => {
+                            const field = document.getElementById(fieldId);
+                            if (field && data[index]) {
+                                field.parentElement.style.display = '';
+                                field.previousElementSibling.textContent = data[index];
+                            } else if (field) {
+                                field.parentElement.style.display = 'none';
+                            }
+                        });
+                    })
+                    .catch(error => console.error(error));
             } else {
                 // Si no se selecciona Grupo, limpiar Subgrupos y ocultar Atributos
                 idTipo2Field.parentElement.style.display = 'none';
@@ -104,6 +103,22 @@
                     if (field) field.parentElement.style.display = 'none';
                 });
             }
+        };
+
+        // Manejar el estado inicial
+        if (idTipo1Field.value) {
+            // Cargar Subgrupo y Atributos en modo de edición
+            cargarCampos(idTipo1Field.value);
+
+            // Si hay un valor seleccionado en IDTipo2, guardarlo en un dataset
+            if (idTipo2Field.value) {
+                idTipo2Field.setAttribute('data-selected', idTipo2Field.value);
+            }
+        }
+
+        // Escuchar cambios en el campo IDTipo1
+        idTipo1Field.addEventListener('change', function () {
+            cargarCampos(idTipo1Field.value);
         });
 
         // Escuchar cambios en el campo IDTipo2
@@ -135,5 +150,6 @@
         });
     });
 </script>
+
 
 {% endblock %}

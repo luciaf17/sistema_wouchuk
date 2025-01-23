@@ -190,24 +190,26 @@ class DesConcatenadaForm(forms.ModelForm):
             'atributo5': forms.TextInput(attrs={'class': 'form-control'}),
             'marca': forms.Select(attrs={'class': 'form-control'}),
             'unidad': forms.Select(attrs={'class': 'form-control'}),
-            'cod_alpha': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
         }
 
     def __init__(self, *args, **kwargs):
         producto = kwargs.pop('producto', None)
         super().__init__(*args, **kwargs)
 
-        # Prellenar cod_alpha si ya existe
         if self.instance and self.instance.pk:
-            self.fields['cod_alpha'].initial = self.instance.cod_alpha
+            # Inicializar valores para los campos si la instancia ya existe
+            self.fields['IDtipo2'].initial = self.instance.IDtipo2
+            self.fields['atributo1'].initial = self.instance.atributo1
+            self.fields['atributo2'].initial = self.instance.atributo2
+            self.fields['atributo3'].initial = self.instance.atributo3
+            self.fields['atributo4'].initial = self.instance.atributo4
+            self.fields['atributo5'].initial = self.instance.atributo5
+
+            
 
         # Opcional: Puedes usar 'producto' para personalizar el formulario
         if producto:
             self.fields['IDtipo1'].label = f"Grupo para {producto.descripcion}"
-
-         # Prellenar cod_alpha si ya existe
-        if self.instance and self.instance.pk:
-            self.fields['cod_alpha'].initial = self.instance.cod_alpha
 
         # Filtrar dinámicamente los IDTipo2 relacionados al IDTipo1 seleccionado
         if 'IDtipo1' in self.data:

@@ -69,8 +69,8 @@ class IDTipo2(models.Model):
     cod_alpha = models.CharField(max_length=3, unique=True)  # Cambiado a CharField
 
     def __str__(self):
-        # Genera automáticamente "Cab - HEX" (si IDtipo1 tiene un valor en idtipo2)
-        return f"{self.IDtipo1.idtipo2}: {self.descripcion}" if self.IDtipo1.idtipo2 else self.descripcion
+        return f"{self.IDtipo1.descripcion}: {self.descripcion}"
+
 
 
 # Modelo para DesConcatenada
