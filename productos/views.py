@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from stock.models import Deposito, Pasillo, Columna, Estante
+from clientes.models import Rubro
 from .models import Marca, Unidad, Sinonimo
 from .forms import MarcaForm, UnidadForm, SinonimoForm
 from .models import Producto, IDTipo1, IDTipo2, DesConcatenada
@@ -94,13 +95,14 @@ class ProductoListView(ListView):
         loc_pas = self.request.GET.get('loc_pas', '')
         loc_col = self.request.GET.get('loc_col', '')
         loc_est = self.request.GET.get('loc_est', '')
+        rubro = self.request.GET.get('rubro', '')
 
         # Filtrar por descripción o código de barras (búsqueda avanzada)
         if query:
             palabras = query.split()
             q_filter = Q()
             for palabra in palabras:
-                q_filter &= Q(descripcion__icontains=palabra) | Q(barcode__icontains=palabra)
+                q_filter &= (Q(descripcion__icontains=palabra) | Q(barcode__icontains=palabra))
             queryset = queryset.filter(q_filter)
 
         # Filtrar por depósito
@@ -119,6 +121,10 @@ class ProductoListView(ListView):
         if loc_est:
             queryset = queryset.filter(loc_est_id=loc_est)
 
+        # Filtrar por rubro
+        if rubro:
+            queryset = queryset.filter(rubro_id=rubro)
+
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -128,6 +134,7 @@ class ProductoListView(ListView):
         context['pasillos'] = Pasillo.objects.all()
         context['columnas'] = Columna.objects.all()
         context['estantes'] = Estante.objects.all()
+        context['rubros'] = Rubro.objects.all()  # Agregar rubros al contexto
         return context
 
 
@@ -138,10 +145,12 @@ class ProductoCreateView(CreateView):
 
     def get_initial(self):
         initial = super().get_initial()
-        initial['loc_dep'] = 1
-        initial['loc_pas'] = 1
-        initial['loc_col'] = 1
-        initial['loc_est'] = 1
+        initial.update({
+            'loc_dep': 1,
+            'loc_pas': 1,
+            'loc_col': 1,
+            'loc_est': 1
+        })
         return initial
 
     def form_invalid(self, form):

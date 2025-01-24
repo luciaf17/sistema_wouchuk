@@ -1,6 +1,7 @@
 from django.db import models
 from utils.audit import AuditModel  # Importa el modelo base desde utils
 from stock.models import Deposito, Pasillo, Columna, Estante
+from clientes.models import Rubro
 
 # Modelo para Productos
 class Producto(AuditModel):
@@ -10,6 +11,7 @@ class Producto(AuditModel):
     loc_pas = models.ForeignKey(Pasillo, on_delete=models.SET_NULL, null=True, blank=True)  # Pasillo
     loc_col = models.ForeignKey(Columna, on_delete=models.SET_NULL, null=True, blank=True)  # Columna
     loc_est = models.ForeignKey(Estante, on_delete=models.SET_NULL, null=True, blank=True)  # Estante
+    rubro = models.ForeignKey(Rubro, on_delete=models.SET_NULL, null=True, blank=True)  # Relación con Rubro
 
     def __str__(self):
         return self.descripcion

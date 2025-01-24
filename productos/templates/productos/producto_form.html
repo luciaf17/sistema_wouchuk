@@ -51,6 +51,10 @@
             <label for="id_loc_est" class="form-label">Estante</label>
             {{ form.loc_est }}
         </div>
+        <div class="mb-3">
+            <label for="id_rubro" class="form-label">Rubro</label>
+            {{ form.rubro }}
+        </div>
         <button type="submit" class="btn btn-success">Guardar</button>
         <a href="{% url 'producto_list' %}" class="btn btn-secondary">Cancelar</a>
     </form>

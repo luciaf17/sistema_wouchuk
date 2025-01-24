@@ -6,7 +6,7 @@ from .models import Producto, Marca, Unidad, Sinonimo, IDTipo1, IDTipo2, DesConc
 class ProductoForm(forms.ModelForm):
     class Meta:
         model = Producto
-        fields = ['barcode', 'descripcion', 'loc_dep', 'loc_pas', 'loc_col', 'loc_est']
+        fields = ['barcode', 'descripcion', 'loc_dep', 'loc_pas', 'loc_col', 'loc_est', 'rubro']
         widgets = {
             'barcode': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escanea el código de barras'}),
             'descripcion': forms.TextInput(attrs={'class': 'form-control'}),
@@ -14,6 +14,7 @@ class ProductoForm(forms.ModelForm):
             'loc_pas': forms.Select(attrs={'class': 'form-control'}),
             'loc_col': forms.Select(attrs={'class': 'form-control'}),
             'loc_est': forms.Select(attrs={'class': 'form-control'}),
+            'rubro': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def clean_barcode(self):
