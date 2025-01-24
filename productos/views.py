@@ -398,7 +398,6 @@ class DesConcatenadaUpdateView(UpdateView):
 
 
 
-
 def idtipo2_list(request, idtipo1_id):
     idtipo2 = IDTipo2.objects.filter(IDtipo1_id=idtipo1_id).values('id', 'descripcion')
     return JsonResponse(list(idtipo2), safe=False)
@@ -414,3 +413,36 @@ def atributos_list(request, idtipo1_id):
 def idtipo1_detail(request, idtipo1_id):
     idtipo1 = get_object_or_404(IDTipo1, id=idtipo1_id)
     return JsonResponse({'idtipo2': idtipo1.IDtipo2})
+
+def calcular_cod_alpha(request):
+    try:
+        idtipo1_id = request.GET.get('idTipo1')
+        idtipo2_id = request.GET.get('idTipo2')
+        producto_id = request.GET.get('productoId')
+
+        # Validación de parámetros
+        if not (idtipo1_id and idtipo2_id and producto_id):
+            return JsonResponse({'error': 'Faltan parámetros'}, status=400)
+
+        # Obtén las instancias de Producto, IDTipo1 e IDTipo2
+        producto = Producto.objects.get(id=producto_id)
+        idtipo1 = IDTipo1.objects.get(id=idtipo1_id)
+        idtipo2 = IDTipo2.objects.get(id=idtipo2_id)
+
+        # Formatea el ID del producto a 7 caracteres con ceros a la izquierda
+        producto_id_formateado = str(producto.id).zfill(7)
+
+        # Lógica para calcular el código alpha
+        cod_alpha = f"{idtipo2.cod_alpha}{idtipo1.cod_alpha}{producto_id_formateado}"
+
+        # Devuelve la respuesta en formato JSON
+        return JsonResponse({'cod_alpha': cod_alpha})
+
+    except Producto.DoesNotExist:
+        return JsonResponse({'error': 'Producto no encontrado'}, status=404)
+    except IDTipo1.DoesNotExist:
+        return JsonResponse({'error': 'IDTipo1 no encontrado'}, status=404)
+    except IDTipo2.DoesNotExist:
+        return JsonResponse({'error': 'IDTipo2 no encontrado'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

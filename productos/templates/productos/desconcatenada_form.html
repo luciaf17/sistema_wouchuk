@@ -10,9 +10,16 @@
             {{ form.IDtipo1 }}
         </div>
         <div class="mb-3">
-            <label for="id_IDtipo2" class="form-label" data-selected="{{ form.IDtipo2.value }}">Subgrupo (IDTipo2)</label>
+            <label for="id_IDtipo2" class="form-label">
+                Subgrupo (IDTipo2): 
+                {% if form.instance and form.instance.IDtipo1 %}
+                    {{ form.instance.IDtipo1.IDtipo2 }}
+                {% else %}
+                    ---
+                {% endif %}
+            </label>
             {{ form.IDtipo2 }}
-        </div>
+        </div>        
         <h4>Atributos</h4>
         {% for field in form %}
             {% if "atributo" in field.name %}
@@ -32,17 +39,24 @@
         </div>
         <div class="mb-3">
             <label for="id_cod_alpha" class="form-label">Código Alpha</label>
-            <input type="text" id="id_cod_alpha" class="form-control" value="{{ form.initial.cod_alpha|default:'' }}" readonly>
-        </div>        
+            <p id="id_cod_alpha" class="form-control" data-producto-id="{{ producto.id }}">
+                {% if form.instance and form.instance.pk %}
+                    {{ form.instance.cod_alpha }}
+                {% else %}
+                    ---
+                {% endif %}
+            </p>
+        </div>          
         <button type="submit" class="btn btn-success">Guardar</button>
         <a href="{% url 'desconcatenada_list' producto.id %}" class="btn btn-secondary">Cancelar</a>
     </form>
 </div>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+     document.addEventListener('DOMContentLoaded', function () {
         const idTipo1Field = document.getElementById('id_IDtipo1');
         const idTipo2Field = document.getElementById('id_IDtipo2');
-        const idTipo2Label = document.querySelector('label[for="id_IDtipo2"]'); // Selecciona el label de Subgrupo
+        const idTipo2Label = document.querySelector('label[for="id_IDtipo2"]'); 
+        const idCodAlpha = document.getElementById('id_cod_alpha');
         const attributeFields = ['id_atributo1', 'id_atributo2', 'id_atributo3', 'id_atributo4', 'id_atributo5'];
 
         // Función para cargar Subgrupo y Atributos
@@ -70,6 +84,23 @@
                         const selectedValue = idTipo2Field.dataset.selected;
                         if (selectedValue) {
                             idTipo2Field.value = selectedValue;
+                        }
+                    })
+                    .catch(error => console.error(error));
+
+                // Solicitar datos de IDTipo1 para obtener el Subgrupo asociado
+                fetch(`/productos/idtipo1/${idTipo1}/`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Error en la solicitud de IDTipo1: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.idtipo2) {
+                            idTipo2Label.textContent = `Subgrupo (IDTipo2): ${data.idtipo2}`;
+                        } else {
+                            idTipo2Label.textContent = 'Subgrupo (IDTipo2): ---';
                         }
                     })
                     .catch(error => console.error(error));
@@ -105,8 +136,8 @@
             }
         };
 
-        // Manejar el estado inicial
-        if (idTipo1Field.value) {
+         // Manejar el estado inicial
+         if (idTipo1Field.value) {
             // Cargar Subgrupo y Atributos en modo de edición
             cargarCampos(idTipo1Field.value);
 
@@ -116,40 +147,43 @@
             }
         }
 
-        // Escuchar cambios en el campo IDTipo1
-        idTipo1Field.addEventListener('change', function () {
-            cargarCampos(idTipo1Field.value);
-        });
-
-        // Escuchar cambios en el campo IDTipo2
-        idTipo2Field.addEventListener('change', function () {
+        // Función para calcular el código alpha
+        const calcularCodigoAlpha = () => {
             const idTipo1 = idTipo1Field.value;
+            const idTipo2 = idTipo2Field.value;
+            const productoId = idCodAlpha.dataset.productoId; // Obtener el ID del producto
 
-            if (idTipo1) {
-                // Mostrar y cargar atributos asociados al Grupo
-                fetch(`/productos/atributos/${idTipo1}/`)
+            if (idTipo1 && idTipo2 && productoId) {
+                fetch(`/productos/calcular_cod_alpha/?idTipo1=${idTipo1}&idTipo2=${idTipo2}&productoId=${productoId}`)
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error(`Error en la solicitud de atributos: ${response.status}`);
+                            throw new Error(`Error HTTP: ${response.status}`);
                         }
                         return response.json();
                     })
                     .then(data => {
-                        attributeFields.forEach((fieldId, index) => {
-                            const field = document.getElementById(fieldId);
-                            if (field && data[index]) {
-                                field.parentElement.style.display = '';
-                                field.previousElementSibling.textContent = data[index];
-                            } else if (field) {
-                                field.parentElement.style.display = 'none';
-                            }
-                        });
+                        if (data.cod_alpha) {
+                            idCodAlpha.textContent = data.cod_alpha; // Actualizar el contenido del párrafo
+                        } else if (data.error) {
+                            console.error('Error en la respuesta:', data.error);
+                            idCodAlpha.textContent = '---';
+                        }
                     })
-                    .catch(error => console.error(error));
+                    .catch(error => console.error('Error al calcular el código alpha:', error));
+            } else {
+                idCodAlpha.textContent = '---'; // Placeholder si falta algún dato
             }
+        };
+
+        // Inicializar carga de campos y cálculo de código alpha
+        if (idTipo1Field.value) {
+            cargarCampos(idTipo1Field.value);
+        }
+        idTipo1Field.addEventListener('change', () => {
+            cargarCampos(idTipo1Field.value);
+            calcularCodigoAlpha();
         });
+        idTipo2Field.addEventListener('change', calcularCodigoAlpha);
     });
 </script>
-
-
 {% endblock %}

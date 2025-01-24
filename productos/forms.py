@@ -204,6 +204,11 @@ class DesConcatenadaForm(forms.ModelForm):
             self.fields['atributo3'].initial = self.instance.atributo3
             self.fields['atributo4'].initial = self.instance.atributo4
             self.fields['atributo5'].initial = self.instance.atributo5
+            # Asegúrate de que el valor inicial de IDTipo2 esté configurado
+            self.fields['IDtipo2'].initial = self.instance.IDtipo2.id
+            self.fields['IDtipo2'].queryset = IDTipo2.objects.filter(IDtipo1=self.instance.IDtipo1)
+        else:
+            self.fields['IDtipo2'].queryset = IDTipo2.objects.none()
 
             
 

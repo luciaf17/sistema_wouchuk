@@ -6,7 +6,7 @@ from .views import (
     SinonimoListView, SinonimoCreateView, SinonimoUpdateView, SinonimoDeleteView, sinonimo_autocomplete,
     IDTipo1ListView, IDTipo1CreateView, IDTipo1UpdateView, IDTipo1DeleteView, idtipo1_detail,
     IDTipo2ListView, IDTipo2CreateView, IDTipo2UpdateView, IDTipo2DeleteView,idtipo2_list, atributos_list,
-    DesConcatenadaListView, DesConcatenadaCreateView, DesConcatenadaUpdateView, atributo_autocomplete,
+    DesConcatenadaListView, DesConcatenadaCreateView, DesConcatenadaUpdateView, atributo_autocomplete, calcular_cod_alpha
 )
 
 urlpatterns = [
@@ -53,5 +53,6 @@ urlpatterns = [
     path('productos/desconcatenada/<int:producto_id>/crear/', DesConcatenadaCreateView.as_view(), name='desconcatenada_create'),
     path('productos/desconcatenada/editar/<int:pk>/', DesConcatenadaUpdateView.as_view(), name='desconcatenada_update'),
     path('atributo-autocomplete/', atributo_autocomplete, name='atributo_autocomplete'),
+    path('calcular_cod_alpha/', calcular_cod_alpha, name='calcular_cod_alpha'),
 
 ]
