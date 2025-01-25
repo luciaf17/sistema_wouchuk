@@ -143,15 +143,6 @@ class ProductoCreateView(CreateView):
     form_class = ProductoForm
     template_name = 'productos/producto_form.html'
 
-    def get_initial(self):
-        initial = super().get_initial()
-        initial.update({
-            'loc_dep': 1,
-            'loc_pas': 1,
-            'loc_col': 1,
-            'loc_est': 1
-        })
-        return initial
 
     def form_invalid(self, form):
         # Maneja errores de validación, como códigos de barras duplicados
@@ -343,12 +334,32 @@ class DesConcatenadaListView(ListView):
 
     def get_queryset(self):
         producto_id = self.kwargs['producto_id']
-        return DesConcatenada.objects.filter(producto_id=producto_id)
+        return (
+            DesConcatenada.objects
+            .filter(producto_id=producto_id)
+            .select_related('producto', 'IDtipo1', 'IDtipo2', 'marca', 'unidad')  # Relaciones directas
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['producto'] = get_object_or_404(Producto, id=self.kwargs['producto_id'])
+        producto = get_object_or_404(Producto, id=self.kwargs['producto_id'])
+        atributos_definidos = DesConcatenada.objects.filter(producto=producto).select_related("IDtipo1").first()
+
+        # Pasar los nombres de los atributos definidos en IDTipo1
+        if atributos_definidos and atributos_definidos.IDtipo1:
+            context['atributo_nombres'] = [
+                atributos_definidos.IDtipo1.atributo1,
+                atributos_definidos.IDtipo1.atributo2,
+                atributos_definidos.IDtipo1.atributo3,
+                atributos_definidos.IDtipo1.atributo4,
+                atributos_definidos.IDtipo1.atributo5,
+            ]
+        else:
+            context['atributo_nombres'] = ["Atributo 1", "Atributo 2", "Atributo 3", "Atributo 4", "Atributo 5"]
+
+        context['producto'] = producto
         return context
+
 
 # Crear DesConcatenada
 class DesConcatenadaCreateView(CreateView):

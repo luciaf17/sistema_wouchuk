@@ -7,19 +7,22 @@
         {% csrf_token %}
         <div class="mb-3">
             <label for="id_IDtipo1" class="form-label">Grupo (IDTipo1)</label>
-            {{ form.IDtipo1 }}
+            <div class="d-flex align-items-center">
+                {{ form.IDtipo1 }}
+                <button type="button" class="btn btn-outline-primary btn-sm ms-2" id="add-grupo-btn" onclick="openGrupoModal()">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
         </div>
         <div class="mb-3">
-            <label for="id_IDtipo2" class="form-label">
-                Subgrupo (IDTipo2): 
-                {% if form.instance and form.instance.IDtipo1 %}
-                    {{ form.instance.IDtipo1.IDtipo2 }}
-                {% else %}
-                    ---
-                {% endif %}
-            </label>
-            {{ form.IDtipo2 }}
-        </div>        
+            <label for="id_IDtipo2" class="form-label">Subgrupo (IDTipo2)</label>
+            <div class="d-flex align-items-center">
+                {{ form.IDtipo2 }}
+                <button type="button" class="btn btn-outline-primary btn-sm ms-2" id="add-subgrupo-btn" onclick="openSubgrupoModal()">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
         <h4>Atributos</h4>
         {% for field in form %}
             {% if "atributo" in field.name %}
@@ -31,11 +34,21 @@
         {% endfor %}
         <div class="mb-3">
             <label for="id_marca" class="form-label">Marca</label>
-            {{ form.marca }}
+            <div class="d-flex align-items-center">
+                {{ form.marca }}
+                <button type="button" class="btn btn-outline-primary btn-sm ms-2" id="add-marca-btn" onclick="openMarcaModal()">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
         </div>
         <div class="mb-3">
             <label for="id_unidad" class="form-label">Unidad</label>
-            {{ form.unidad }}
+            <div class="d-flex align-items-center">
+                {{ form.unidad }}
+                <button type="button" class="btn btn-outline-primary btn-sm ms-2" id="add-unidad-btn" onclick="openUnidadModal()">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
         </div>
         <div class="mb-3">
             <label for="id_cod_alpha" class="form-label">Código Alpha</label>
@@ -46,12 +59,28 @@
                     ---
                 {% endif %}
             </p>
-        </div>          
+        </div>
         <button type="submit" class="btn btn-success">Guardar</button>
         <a href="{% url 'desconcatenada_list' producto.id %}" class="btn btn-secondary">Cancelar</a>
     </form>
 </div>
 <script>
+    function openGrupoModal() {
+        window.open("{% url 'idtipo1_create' %}", "_blank");
+    }
+
+    function openSubgrupoModal() {
+        window.open("{% url 'idtipo2_create' %}", "_blank");
+    }
+
+    function openMarcaModal() {
+        window.open("{% url 'marca_create' %}", "_blank");
+    }
+
+    function openUnidadModal() {
+        window.open("{% url 'unidad_create' %}", "_blank");
+    }
+
      document.addEventListener('DOMContentLoaded', function () {
         const idTipo1Field = document.getElementById('id_IDtipo1');
         const idTipo2Field = document.getElementById('id_IDtipo2');
@@ -147,6 +176,7 @@
             }
         }
 
+       
         // Función para calcular el código alpha
         const calcularCodigoAlpha = () => {
             const idTipo1 = idTipo1Field.value;

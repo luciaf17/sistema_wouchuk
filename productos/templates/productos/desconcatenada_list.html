@@ -16,6 +16,9 @@
                 <th>Subgrupo</th>
                 <th>Marca</th>
                 <th>Unidad</th>
+                {% for nombre in atributo_nombres %}
+                <th>{{ nombre|default:"-" }}</th>
+                {% endfor %}
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -27,13 +30,18 @@
                 <td>{{ atributo.IDtipo2.descripcion }}</td>
                 <td>{{ atributo.marca }}</td>
                 <td>{{ atributo.unidad }}</td>
+                <td>{{ atributo.atributo1|default:"-" }}</td>
+                <td>{{ atributo.atributo2|default:"-" }}</td>
+                <td>{{ atributo.atributo3|default:"-" }}</td>
+                <td>{{ atributo.atributo4|default:"-" }}</td>
+                <td>{{ atributo.atributo5|default:"-" }}</td>
                 <td>
                     <a href="{% url 'desconcatenada_update' atributo.id %}" class="btn btn-warning btn-sm">Editar</a>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" class="text-center">No se encontraron atributos para este producto</td>
+                <td colspan="{{ atributo_nombres|length|add:6 }}" class="text-center">No se encontraron atributos para este producto</td>
             </tr>
             {% endfor %}
         </tbody>

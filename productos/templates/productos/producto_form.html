@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
+
 <div class="container mt-4">
     <h2>{% if object %}Editar Producto{% else %}Crear Nuevo Producto{% endif %}</h2>
     <form method="post" id="producto-form">
@@ -53,8 +54,13 @@
         </div>
         <div class="mb-3">
             <label for="id_rubro" class="form-label">Rubro</label>
-            {{ form.rubro }}
-        </div>
+            <div class="d-flex align-items-center">
+                {{ form.rubro }}
+                <button type="button" class="btn btn-outline-primary btn-sm ms-2" id="add-rubro-btn" onclick="openRubroModal()">
+                    <i class="fas fa-plus"></i> <!-- Ícono del botón -->
+                </button>
+            </div>
+        </div>        
         <button type="submit" class="btn btn-success">Guardar</button>
         <a href="{% url 'producto_list' %}" class="btn btn-secondary">Cancelar</a>
     </form>
@@ -82,6 +88,10 @@
             }
         }
     });
+
+    function openRubroModal() {
+        window.open("{% url 'rubro_create' %}", "_blank");
+    }
 
     // Botón para buscar manualmente la descripción en Google
     document.getElementById('buscar-barcode').addEventListener('click', async function() {
