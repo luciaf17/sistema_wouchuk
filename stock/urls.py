@@ -1,11 +1,15 @@
 # urls.py
 from django.urls import path
-from .views import (DepositoListView, DepositoCreateView, DepositoUpdateView, DepositoDeleteView,
+from .views import (DepositoListView, DepositoCreateView, DepositoUpdateView, DepositoDeleteView, ConsultaStockView,
                     PasilloListView, PasilloCreateView, PasilloUpdateView, PasilloDeleteView,
                     ColumnaListView, ColumnaCreateView, ColumnaUpdateView, ColumnaDeleteView,
                     EstanteListView, EstanteCreateView, EstanteUpdateView, EstanteDeleteView,)
 
 urlpatterns = [
+
+    # Consulta de Stock
+    path('consulta/', ConsultaStockView.as_view(), name='consulta_stock'),
+
     # Depósitos
     path('depositos/', DepositoListView.as_view(), name='deposito_list'),
     path('depositos/create/', DepositoCreateView.as_view(), name='deposito_create'),

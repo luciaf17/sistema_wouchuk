@@ -77,7 +77,7 @@ class IDTipo2(models.Model):
 
 # Modelo para DesConcatenada
 class DesConcatenada(models.Model):
-    producto = models.ForeignKey('Producto', on_delete=models.CASCADE)
+    producto = models.ForeignKey('Producto', on_delete=models.CASCADE, related_name='desconcatenada')
     IDtipo1 = models.ForeignKey(IDTipo1, on_delete=models.CASCADE)
     IDtipo2 = models.ForeignKey(IDTipo2, on_delete=models.CASCADE)
     atributo1 = models.TextField(null=True, blank=True)
