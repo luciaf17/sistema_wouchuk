@@ -39,5 +39,10 @@ class Stock(models.Model):
     deposito = models.ForeignKey(Deposito, on_delete=models.CASCADE, verbose_name="Depósito")
     cantidad = models.PositiveIntegerField(default=0, verbose_name="Cantidad")
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['producto', 'deposito'], name='idx_producto_deposito'),
+        ]
+
     def __str__(self):
         return f"{self.producto.descripcion} - {self.deposito.descripcion} - {self.cantidad}"
