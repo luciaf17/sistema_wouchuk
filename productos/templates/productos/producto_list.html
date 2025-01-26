@@ -87,7 +87,7 @@
                     <td>{{ producto.barcode }}</td>
                     <td>{{ producto.descripcion }}</td>
                     <td>
-                        {{ producto.loc_dep }}-{{ producto.loc_pas }}-{{ producto.loc_col }}-{{ producto.loc_est }}
+                        {{ producto.loc_dep|default:"-" }}-{{ producto.loc_pas|default:"-" }}-{{ producto.loc_col|default:"-" }}-{{ producto.loc_est|default:"-" }}
                     </td>
                     <td>{{ producto.rubro|default:"-" }}</td>  
                     <td>

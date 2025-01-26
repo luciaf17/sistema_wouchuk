@@ -90,7 +90,12 @@ class ProductoDepositoDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['stocks'] = Stock.objects.filter(producto=self.object).select_related('deposito')
+        # Excluir depósitos "Compras" y "Ventas"
+        context['stocks'] = Stock.objects.filter(
+            producto=self.object
+        ).exclude(
+            deposito__descripcion__in=["Compras", "Ventas"]
+        ).select_related('deposito')
         return context
 
 
