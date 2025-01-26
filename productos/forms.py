@@ -1,7 +1,7 @@
 from django import forms
 from django.http import JsonResponse
 from django.urls import reverse_lazy
-from .models import Producto, Marca, Unidad, Sinonimo, IDTipo1, IDTipo2, DesConcatenada
+from .models import Producto, Marca, Unidad, Sinonimo, IDTipo1, IDTipo2, DesConcatenada, TipoIDTipo2
 
 class ProductoForm(forms.ModelForm):
     class Meta:
@@ -120,7 +120,7 @@ class IDTipo1Form(forms.ModelForm):
         ]
         widgets = {
             'descripcion': forms.TextInput(attrs={'class': 'form-control'}),
-            'IDtipo2': forms.TextInput(attrs={'class': 'form-control'}),
+            'IDtipo2': forms.Select(attrs={'class': 'form-control'}),
             'atributo1': forms.TextInput(attrs={'class': 'form-control', 'data-autocomplete-url': reverse_lazy('atributo_autocomplete')}),
             'atributo2': forms.TextInput(attrs={'class': 'form-control', 'data-autocomplete-url': reverse_lazy('atributo_autocomplete')}),
             'atributo3': forms.TextInput(attrs={'class': 'form-control', 'data-autocomplete-url': reverse_lazy('atributo_autocomplete')}),
@@ -251,3 +251,12 @@ class DesConcatenadaForm(forms.ModelForm):
             for i, atributo in enumerate(atributos, start=1):
                 if atributo:
                     self.fields[f'atributo{i}'].label = atributo
+
+class TipoIDTipo2Form(forms.ModelForm):
+    class Meta:
+        model = TipoIDTipo2
+        fields = ['descripcion', 'abreviatura']
+        widgets = {
+            'descripcion': forms.TextInput(attrs={'class': 'form-control'}),
+            'abreviatura': forms.TextInput(attrs={'class': 'form-control'}),
+        }

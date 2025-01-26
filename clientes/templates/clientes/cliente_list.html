@@ -13,7 +13,7 @@
     <form method="get" class="mb-3">
         <div class="row">
             <div class="col-md-6">
-                <input type="text" name="q" class="form-control" placeholder="Buscar por descripción" value="{{ request.GET.q }}">
+                <input type="text" name="q" class="form-control" placeholder="Buscar por descripción o fantasía" value="{{ request.GET.q }}">
             </div>
             <div class="col-md-4">
                 <select name="tipo_cliente" class="form-control">
@@ -32,11 +32,13 @@
     </form>
 
     <!-- Tabla de clientes -->
+    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
     <table class="table table-striped table-bordered">
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Descripción</th>
+                <th>Fantasia</th>
                 <th>Tipos de Cliente</th>
                 <th>Principal</th>
                 <th>Contactos</th>
@@ -48,6 +50,7 @@
             <tr>
                 <td>{{ cliente.id }}</td>
                 <td>{{ cliente.descripcion }}</td>
+                <td>{{ cliente.fantasia }}</td>
                 <td>
                     {% for tipo in cliente.tipos.all %}
                         {{ tipo.tipo_cliente.descripcion }}{% if not forloop.last %}, {% endif %}
@@ -56,9 +59,7 @@
                 <td>{{ cliente.get_tipo_principal }}</td>
                 <td>
                     <a href="{% url 'contacto_list' cliente.id %}" class="btn btn-info btn-sm">Ver Contactos</a>
-
                 </td>
-                
                 <td>
                     <a href="{% url 'cliente_update' cliente.id %}" class="btn btn-warning btn-sm">Editar</a>
                     <a href="{% url 'cliente_delete' cliente.id %}" class="btn btn-danger btn-sm">Eliminar</a>
@@ -66,10 +67,11 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" class="text-center">No se encontraron clientes</td>
+                <td colspan="7" class="text-center">No se encontraron clientes</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+</div>
 </div>
 {% endblock %}

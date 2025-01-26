@@ -39,10 +39,23 @@ class Sinonimo(models.Model):
     def __str__(self):
         return self.descripcion
 
+class TipoIDTipo2(models.Model):
+    descripcion = models.CharField(max_length=255)
+    abreviatura = models.CharField(max_length=10)
+
+    def __str__(self):
+        return f"{self.descripcion} ({self.abreviatura})"
+
 
 class IDTipo1(models.Model):
     descripcion = models.TextField()
-    IDtipo2 = models.TextField()
+    IDtipo2 = models.ForeignKey(
+        'TipoIDTipo2',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='idtipo1'
+    )
     atributo1 = models.TextField(null=True, blank=True)
     atributo2 = models.TextField(null=True, blank=True)
     atributo3 = models.TextField(null=True, blank=True)

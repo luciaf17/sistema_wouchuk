@@ -81,23 +81,21 @@
         window.open("{% url 'unidad_create' %}", "_blank");
     }
 
-     document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function () {
         const idTipo1Field = document.getElementById('id_IDtipo1');
         const idTipo2Field = document.getElementById('id_IDtipo2');
-        const idTipo2Label = document.querySelector('label[for="id_IDtipo2"]'); 
+        const idTipo2Label = document.querySelector('label[for="id_IDtipo2"]');
         const idCodAlpha = document.getElementById('id_cod_alpha');
         const attributeFields = ['id_atributo1', 'id_atributo2', 'id_atributo3', 'id_atributo4', 'id_atributo5'];
 
-        // Función para cargar Subgrupo y Atributos
+        // Función para cargar Subgrupo, Atributos y actualizar el label de IDTipo2
         const cargarCampos = (idTipo1) => {
             if (idTipo1) {
                 // Mostrar Subgrupo y cargar opciones
                 idTipo2Field.parentElement.style.display = '';
                 fetch(`/productos/idtipo2/${idTipo1}/`)
                     .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Error en la solicitud de IDTipo2: ${response.status}`);
-                        }
+                        if (!response.ok) throw new Error(`Error en la solicitud de IDTipo2: ${response.status}`);
                         return response.json();
                     })
                     .then(data => {
@@ -111,23 +109,20 @@
 
                         // Seleccionar el valor actual si existe
                         const selectedValue = idTipo2Field.dataset.selected;
-                        if (selectedValue) {
-                            idTipo2Field.value = selectedValue;
-                        }
+                        if (selectedValue) idTipo2Field.value = selectedValue;
                     })
                     .catch(error => console.error(error));
 
-                // Solicitar datos de IDTipo1 para obtener el Subgrupo asociado
+                // Obtener la descripción del tipoidtipo2 asociado al idTipo1
                 fetch(`/productos/idtipo1/${idTipo1}/`)
                     .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Error en la solicitud de IDTipo1: ${response.status}`);
-                        }
+                        if (!response.ok) throw new Error(`Error en la solicitud de IDTipo1: ${response.status}`);
                         return response.json();
                     })
                     .then(data => {
-                        if (data.idtipo2) {
-                            idTipo2Label.textContent = `Subgrupo (IDTipo2): ${data.idtipo2}`;
+                        // Actualizar el label de IDTipo2 con la descripción del tipoidtipo2
+                        if (data.idtipo2 && data.idtipo2.descripcion) {
+                            idTipo2Label.textContent = `Subgrupo (IDTipo2): ${data.idtipo2.descripcion}`;
                         } else {
                             idTipo2Label.textContent = 'Subgrupo (IDTipo2): ---';
                         }
@@ -137,9 +132,7 @@
                 // Mostrar y cargar atributos asociados al Grupo
                 fetch(`/productos/atributos/${idTipo1}/`)
                     .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Error en la solicitud de atributos: ${response.status}`);
-                        }
+                        if (!response.ok) throw new Error(`Error en la solicitud de atributos: ${response.status}`);
                         return response.json();
                     })
                     .then(data => {
@@ -165,43 +158,24 @@
             }
         };
 
-         // Manejar el estado inicial
-         if (idTipo1Field.value) {
-            // Cargar Subgrupo y Atributos en modo de edición
-            cargarCampos(idTipo1Field.value);
-
-            // Si hay un valor seleccionado en IDTipo2, guardarlo en un dataset
-            if (idTipo2Field.value) {
-                idTipo2Field.setAttribute('data-selected', idTipo2Field.value);
-            }
-        }
-
-       
         // Función para calcular el código alpha
         const calcularCodigoAlpha = () => {
             const idTipo1 = idTipo1Field.value;
             const idTipo2 = idTipo2Field.value;
-            const productoId = idCodAlpha.dataset.productoId; // Obtener el ID del producto
+            const productoId = idCodAlpha.dataset.productoId;
 
             if (idTipo1 && idTipo2 && productoId) {
                 fetch(`/productos/calcular_cod_alpha/?idTipo1=${idTipo1}&idTipo2=${idTipo2}&productoId=${productoId}`)
                     .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Error HTTP: ${response.status}`);
-                        }
+                        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
                         return response.json();
                     })
                     .then(data => {
-                        if (data.cod_alpha) {
-                            idCodAlpha.textContent = data.cod_alpha; // Actualizar el contenido del párrafo
-                        } else if (data.error) {
-                            console.error('Error en la respuesta:', data.error);
-                            idCodAlpha.textContent = '---';
-                        }
+                        idCodAlpha.textContent = data.cod_alpha || '---';
                     })
                     .catch(error => console.error('Error al calcular el código alpha:', error));
             } else {
-                idCodAlpha.textContent = '---'; // Placeholder si falta algún dato
+                idCodAlpha.textContent = '---';
             }
         };
 
@@ -213,7 +187,10 @@
             cargarCampos(idTipo1Field.value);
             calcularCodigoAlpha();
         });
+
         idTipo2Field.addEventListener('change', calcularCodigoAlpha);
     });
 </script>
+
+
 {% endblock %}

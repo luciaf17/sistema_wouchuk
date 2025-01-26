@@ -26,17 +26,25 @@ class ConsultaStockView(ListView):
             .annotate(
                 calculated_stock=Sum(
                     Case(
-                        When(detalleremito__remito__tipo_remito='compra', then=F('detalleremito__cantidad')),
-                        When(detalleremito__remito__tipo_remito='venta', then=-F('detalleremito__cantidad')),
-                        When(
-                            detalleremito__remito__tipo_remito='interdeposito',
-                            then=Case(
-                                When(detalleremito__dep_origen__isnull=False, then=-F('detalleremito__cantidad')),
-                                When(detalleremito__dep_destino__isnull=False, then=F('detalleremito__cantidad')),
-                                default=Value(0),
-                                output_field=IntegerField(),
-                            )
-                        ),
+                        # Solo considerar remitos activos
+                        When(detalleremito__remito__estado_remito='activo', then=Case(
+                            # Compras aumentan el stock
+                            When(detalleremito__remito__tipo_remito='compra', then=F('detalleremito__cantidad')),
+                            # Ventas disminuyen el stock
+                            When(detalleremito__remito__tipo_remito='venta', then=-F('detalleremito__cantidad')),
+                            # Interdepósitos afectan origen y destino
+                            When(
+                                detalleremito__remito__tipo_remito='interdeposito',
+                                then=Case(
+                                    When(detalleremito__dep_origen__isnull=False, then=-F('detalleremito__cantidad')),
+                                    When(detalleremito__dep_destino__isnull=False, then=F('detalleremito__cantidad')),
+                                    default=Value(0),
+                                    output_field=IntegerField(),
+                                )
+                            ),
+                            default=Value(0),
+                            output_field=IntegerField(),
+                        )),
                         default=Value(0),
                         output_field=IntegerField(),
                     )

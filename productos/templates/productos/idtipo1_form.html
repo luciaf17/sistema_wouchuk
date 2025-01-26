@@ -13,8 +13,13 @@
             {{ form.descripcion }}
         </div>
         <div class="mb-3">
-            <label for="id_IDtipo2" class="form-label">Subgrupo</label>
-            {{ form.IDtipo2 }}
+            <label for="id_IDtipo2" class="form-label">Subgrupo (IDTipo2)</label>
+            <div class="d-flex align-items-center">
+                {{ form.IDtipo2 }}
+                <button type="button" class="btn btn-outline-primary btn-sm ms-2" id="add-subgrupo-btn" onclick="openSubgrupoModal()">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
         </div>
         <div class="mb-3">
             <label for="id_cod_alpha" class="form-label">Cod Alpha</label>
@@ -107,6 +112,10 @@
     </form>
 </div>
 <script>
+    function openSubgrupoModal() {
+        // Cambia esta URL al nombre de tu vista correspondiente para crear un tipoidtipo2
+        window.open("{% url 'tipoidtipo2_create' %}", "_blank");
+    }
     $(document).ready(function () {
     // Autocompletado para sinónimos
     $('#id_sinonimos').autocomplete({

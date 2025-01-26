@@ -5,8 +5,8 @@ from stock.models import Deposito, Pasillo, Columna, Estante
 from clientes.models import Rubro
 from .models import Marca, Unidad, Sinonimo
 from .forms import MarcaForm, UnidadForm, SinonimoForm
-from .models import Producto, IDTipo1, IDTipo2, DesConcatenada
-from .forms import ProductoForm, IDTipo1Form, IDTipo2Form, DesConcatenadaForm
+from .models import Producto, IDTipo1, IDTipo2, DesConcatenada, TipoIDTipo2
+from .forms import ProductoForm, IDTipo1Form, IDTipo2Form, DesConcatenadaForm, TipoIDTipo2Form
 from django.db import models
 import requests
 import re
@@ -431,8 +431,22 @@ def atributos_list(request, idtipo1_id):
     return JsonResponse([attr for attr in atributos if attr], safe=False)
 
 def idtipo1_detail(request, idtipo1_id):
+    # Obtener el objeto IDTipo1 o devolver un 404 si no existe
     idtipo1 = get_object_or_404(IDTipo1, id=idtipo1_id)
-    return JsonResponse({'idtipo2': idtipo1.IDtipo2})
+    
+    # Verificar si tiene un IDTipo2 asociado
+    if idtipo1.IDtipo2:
+        idtipo2_data = {
+            'id': idtipo1.IDtipo2.id,
+            'descripcion': idtipo1.IDtipo2.descripcion,
+            'abreviatura': idtipo1.IDtipo2.abreviatura
+        }
+    else:
+        idtipo2_data = None  # Si no tiene asociado un IDTipo2
+    
+    # Devolver los datos en formato JSON
+    return JsonResponse({'idtipo2': idtipo2_data})
+
 
 def calcular_cod_alpha(request):
     try:
@@ -453,7 +467,7 @@ def calcular_cod_alpha(request):
         producto_id_formateado = str(producto.id).zfill(7)
 
         # Lógica para calcular el código alpha
-        cod_alpha = f"{idtipo2.cod_alpha}{idtipo1.cod_alpha}{producto_id_formateado}"
+        cod_alpha = f"{idtipo1.cod_alpha}{idtipo2.cod_alpha}{producto_id_formateado}"
 
         # Devuelve la respuesta en formato JSON
         return JsonResponse({'cod_alpha': cod_alpha})
@@ -466,3 +480,44 @@ def calcular_cod_alpha(request):
         return JsonResponse({'error': 'IDTipo2 no encontrado'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+# Listar
+class TipoIDTipo2ListView(ListView):
+    model = TipoIDTipo2
+    template_name = 'productos/tipoidtipo2_list.html'
+    context_object_name = 'tipos'
+
+# Crear
+class TipoIDTipo2CreateView(CreateView):
+    model = TipoIDTipo2
+    form_class = TipoIDTipo2Form
+    template_name = 'productos/tipoidtipo2_form.html'
+    success_url = reverse_lazy('tipoidtipo2_list')
+
+# Editar
+class TipoIDTipo2UpdateView(UpdateView):
+    model = TipoIDTipo2
+    form_class = TipoIDTipo2Form
+    template_name = 'productos/tipoidtipo2_form.html'
+    success_url = reverse_lazy('tipoidtipo2_list')
+
+# Eliminar
+class TipoIDTipo2DeleteView(DeleteView):
+    model = TipoIDTipo2
+    template_name = 'confirm_delete.html'
+    success_url = reverse_lazy('tipoidtipo2_list')
+
+
+def get_idtipo1_details(request, idTipo1):
+    try:
+        # Obtener el objeto IDTipo1
+        idtipo1 = IDTipo1.objects.get(pk=idTipo1)
+
+        # Verificar si tiene un IDTipo2 asociado y obtener su descripción
+        tipoidtipo2_descripcion = idtipo1.IDtipo2.descripcion if idtipo1.IDtipo2 else "---"
+
+        # Devolver una respuesta JSON con datos serializables
+        return JsonResponse({"idtipo2_descripcion": tipoidtipo2_descripcion})
+    except IDTipo1.DoesNotExist:
+        # Manejar el caso en que el idTipo1 no exista
+        return JsonResponse({"idtipo2_descripcion": "---"}, status=404)

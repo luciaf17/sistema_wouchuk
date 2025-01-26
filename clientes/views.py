@@ -291,12 +291,17 @@ class ClienteListView(ListView):
     context_object_name = 'clientes'
 
     def get_queryset(self):
-        queryset = Cliente.objects.all()
-        q = self.request.GET.get('q')
+        queryset = Cliente.objects.prefetch_related('tipos__tipo_cliente')  # Optimizar relaciones
+        q = self.request.GET.get('q', '').strip()
         tipo_cliente = self.request.GET.get('tipo_cliente')
 
         if q:
-            queryset = queryset.filter(descripcion__icontains=q)
+            # Búsqueda por descripción o fantasía
+            palabras = q.split()
+            q_filter = Q()
+            for palabra in palabras:
+                q_filter &= Q(descripcion__icontains=palabra) | Q(fantasia__icontains=palabra)
+            queryset = queryset.filter(q_filter)
 
         if tipo_cliente:
             # Filtrar por clientes que tengan el tipo de cliente especificado
@@ -306,7 +311,7 @@ class ClienteListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['tipos_cliente'] = TipoCliente.objects.all()
+        context['tipos_cliente'] = TipoCliente.objects.all()  # Lista de tipos de cliente para el formulario
         context['clientes_principal'] = {
             cliente.id: cliente.tipos.filter(principal=True).first().tipo_cliente.descripcion
             if cliente.tipos.filter(principal=True).exists()

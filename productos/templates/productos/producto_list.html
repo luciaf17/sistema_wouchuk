@@ -68,43 +68,45 @@
     <a href="{% url 'producto_create' %}" class="btn btn-success mb-3">Crear Nuevo Producto</a>
 
     <!-- Tabla de productos -->
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Código de Barras</th>
-                <th>Descripción</th>
-                <th>Ubicación</th>
-                <th>Rubro</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for producto in productos %}
-            <tr>
-                <td>{{ producto.id }}</td>
-                <td>{{ producto.barcode }}</td>
-                <td>{{ producto.descripcion }}</td>
-                <td>
-                    {{ producto.loc_dep }}-{{ producto.loc_pas }}-{{ producto.loc_col }}-{{ producto.loc_est }}
-                </td>
-                <td>{{ producto.rubro|default:"-" }}</td>  
-                <td>
-                    <a href="{% url 'producto_update' producto.id %}" class="btn btn-warning btn-sm">Editar</a>
-                    <a href="{% url 'producto_delete' producto.id %}" class="btn btn-danger btn-sm">Eliminar</a>
-                    {% if producto.id %}
-                        <a href="{% url 'desconcatenada_list' producto.id %}" class="btn btn-info btn-sm">Ver Atributos</a>
-                    {% else %}
-                        <span class="text-muted">Sin Atributos</span>
-                    {% endif %}
-                </td>           
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5" class="text-center">No se encontraron productos</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Código de Barras</th>
+                    <th>Descripción</th>
+                    <th>Ubicación</th>
+                    <th>Rubro</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos %}
+                <tr>
+                    <td>{{ producto.id }}</td>
+                    <td>{{ producto.barcode }}</td>
+                    <td>{{ producto.descripcion }}</td>
+                    <td>
+                        {{ producto.loc_dep }}-{{ producto.loc_pas }}-{{ producto.loc_col }}-{{ producto.loc_est }}
+                    </td>
+                    <td>{{ producto.rubro|default:"-" }}</td>  
+                    <td>
+                        <a href="{% url 'producto_update' producto.id %}" class="btn btn-warning btn-sm">Editar</a>
+                        <a href="{% url 'producto_delete' producto.id %}" class="btn btn-danger btn-sm">Eliminar</a>
+                        {% if producto.id %}
+                            <a href="{% url 'desconcatenada_list' producto.id %}" class="btn btn-info btn-sm">Ver Atributos</a>
+                        {% else %}
+                            <span class="text-muted">Sin Atributos</span>
+                        {% endif %}
+                    </td>           
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">No se encontraron productos</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
