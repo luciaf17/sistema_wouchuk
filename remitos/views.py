@@ -321,20 +321,24 @@ class RemitoUpdateView(UpdateView):
 
         for detalle in detalles_antiguos:
             if tipo_remito == 'compra':
-                # Revertir compra
-                actualizar_stock(detalle.producto, detalle.dep_destino, -detalle.cantidad, 'compra')
+                # Revertir compra: restar al destino
+                actualizar_stock(detalle.producto, detalle.dep_destino, -detalle.cantidad, 'compra', deposito_origen=None)
             elif tipo_remito == 'venta':
-                # Revertir venta
-                actualizar_stock(detalle.producto, detalle.dep_origen, detalle.cantidad, 'venta')
+                # Revertir venta: devolver al origen y restar de "Ventas"
+                actualizar_stock(detalle.producto, detalle.dep_origen, detalle.cantidad, 'venta', deposito_origen=None)
+                deposito_ventas, _ = Deposito.objects.get_or_create(descripcion="Ventas")
+                actualizar_stock(detalle.producto, deposito_ventas, -detalle.cantidad, 'venta', deposito_origen=None)
             elif tipo_remito == 'interdeposito':
                 # Revertir interdepósito
                 actualizar_stock(detalle.producto, detalle.dep_destino, -detalle.cantidad, 'interdeposito', deposito_origen=detalle.dep_origen)
+                actualizar_stock(detalle.producto, detalle.dep_origen, detalle.cantidad, 'interdeposito', deposito_origen=detalle.dep_origen)
             elif tipo_remito == 'ajuste':
-                # Ajuste no requiere revertir
+                # Ajustes no requieren revertir
                 continue
 
         # Eliminar los detalles antiguos
         detalles_antiguos.delete()
+
 
     def procesar_nuevos_detalles(self, detalles, tipo_remito):
         """
@@ -372,18 +376,21 @@ class RemitoUpdateView(UpdateView):
                     raise ValueError("El depósito de destino es obligatorio para un ajuste.")
                 dep_destino = Deposito.objects.get(id=dep_destino_id)
 
-            # Crear detalle
-            DetalleRemito.objects.create(
+            # Crear o actualizar detalle
+            detalle_obj, created = DetalleRemito.objects.update_or_create(
                 remito=self.object,
                 producto=producto,
                 dep_origen=dep_origen,
                 dep_destino=dep_destino,
-                cantidad=cantidad,
-                precio_unit=decimal.Decimal(precio_unit),
+                defaults={
+                    'cantidad': cantidad,
+                    'precio_unit': decimal.Decimal(precio_unit),
+                }
             )
 
-            # Actualizar stock según el tipo de remito
-            actualizar_stock(producto, dep_destino, cantidad, tipo_remito, deposito_origen=dep_origen)
+            # Actualizar stock solo si es un detalle nuevo o si cambió la cantidad
+            if created or detalle_obj.cantidad != cantidad:
+                actualizar_stock(producto, dep_destino, cantidad, tipo_remito, deposito_origen=dep_origen)
 
 
     def get_success_url(self):
