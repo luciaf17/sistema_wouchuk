@@ -2,7 +2,7 @@
 from django.db import models
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-from .models import Deposito, Pasillo, Columna, Estante
+from .models import Deposito, Pasillo, Columna, Estante, Stock
 from .forms import DepositoForm, PasilloForm, ColumnaForm, EstanteForm
 
 
@@ -13,44 +13,23 @@ from django.db.models import Case, When, Value, F, IntegerField, Sum
 
 from django.db.models import Sum, F, Case, When, IntegerField, Value, Q
 
+from django.db.models import Q
+from django.views.generic import ListView, DetailView
+from .models import Deposito, Stock
+from productos.models import Producto, Rubro, IDTipo1, IDTipo2
+
+from django.db.models import F, Sum, Q
+
 class ConsultaStockView(ListView):
-    model = Producto
+    model = Stock
     template_name = 'stock/consulta_stock.html'
-    context_object_name = 'productos'
+    context_object_name = 'stocks'
 
     def get_queryset(self):
-        queryset = (
-            Producto.objects
-            .select_related('rubro')  # Relación directa
-            .prefetch_related('desconcatenada__IDtipo1', 'desconcatenada__IDtipo2')  # Relación inversa
-            .annotate(
-                calculated_stock=Sum(
-                    Case(
-                        # Solo considerar remitos activos
-                        When(detalleremito__remito__estado_remito='activo', then=Case(
-                            # Compras aumentan el stock
-                            When(detalleremito__remito__tipo_remito='compra', then=F('detalleremito__cantidad')),
-                            # Ventas disminuyen el stock
-                            When(detalleremito__remito__tipo_remito='venta', then=-F('detalleremito__cantidad')),
-                            # Interdepósitos afectan origen y destino
-                            When(
-                                detalleremito__remito__tipo_remito='interdeposito',
-                                then=Case(
-                                    When(detalleremito__dep_origen__isnull=False, then=-F('detalleremito__cantidad')),
-                                    When(detalleremito__dep_destino__isnull=False, then=F('detalleremito__cantidad')),
-                                    default=Value(0),
-                                    output_field=IntegerField(),
-                                )
-                            ),
-                            default=Value(0),
-                            output_field=IntegerField(),
-                        )),
-                        default=Value(0),
-                        output_field=IntegerField(),
-                    )
-                )
-            )
-        )
+    # Excluir depósitos "Compras" y "Ventas" de la consulta general
+        exclude_depositos = Deposito.objects.filter(descripcion__in=["Compras", "Ventas"]).values_list('id', flat=True)
+        
+        queryset = Stock.objects.select_related('producto', 'deposito').exclude(deposito_id__in=exclude_depositos)
 
         # Filtro por descripción o código de barras
         query = self.request.GET.get('q', '').strip()
@@ -58,30 +37,43 @@ class ConsultaStockView(ListView):
             palabras = query.split()
             q_filter = Q()
             for palabra in palabras:
-                q_filter &= Q(descripcion__icontains=palabra) | Q(barcode__icontains=palabra)
+                q_filter &= Q(producto__descripcion__icontains=palabra) | Q(producto__barcode__icontains=palabra)
             queryset = queryset.filter(q_filter)
 
-        # Filtro por Rubro
+        # Filtro por rubro, grupo, subgrupo
         rubro = self.request.GET.get('rubro')
         if rubro:
-            queryset = queryset.filter(rubro_id=rubro)
+            queryset = queryset.filter(producto__rubro_id=rubro)
 
-        # Filtro por Grupo (IDTipo1)
         grupo = self.request.GET.get('grupo')
         if grupo:
-            queryset = queryset.filter(desconcatenada__IDtipo1_id=grupo)
+            queryset = queryset.filter(producto__desconcatenada__IDtipo1_id=grupo)
 
-        # Filtro por Subgrupo (IDTipo2)
         subgrupo = self.request.GET.get('subgrupo')
         if subgrupo:
-            queryset = queryset.filter(desconcatenada__IDtipo2_id=subgrupo)
+            queryset = queryset.filter(producto__desconcatenada__IDtipo2_id=subgrupo)
 
-        # Filtro por Depósito
         deposito = self.request.GET.get('deposito')
         if deposito:
-            queryset = queryset.filter(detalleremito__dep_destino_id=deposito)
+            # Filtrar por depósito específico
+            queryset = queryset.filter(deposito_id=deposito)
+        else:
+            # Agrupar por producto para calcular cantidad total
+            queryset = (
+                queryset.values(
+                    'producto__id',
+                    'producto__descripcion',
+                    'producto__barcode',
+                    'producto__rubro__descripcion',
+                    'producto__desconcatenada__IDtipo1__descripcion',
+                    'producto__desconcatenada__IDtipo2__descripcion',
+                )
+                .annotate(total_cantidad=Sum('cantidad'))
+                .order_by('producto__id')
+            )
 
         return queryset
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -89,6 +81,16 @@ class ConsultaStockView(ListView):
         context['grupos'] = IDTipo1.objects.all()
         context['subgrupos'] = IDTipo2.objects.all()
         context['depositos'] = Deposito.objects.all()
+        return context
+
+class ProductoDepositoDetailView(DetailView):
+    model = Producto
+    template_name = 'stock/producto_deposito_detail.html'
+    context_object_name = 'producto'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['stocks'] = Stock.objects.filter(producto=self.object).select_related('deposito')
         return context
 
 

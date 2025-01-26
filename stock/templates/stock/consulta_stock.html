@@ -53,38 +53,56 @@
     </form>
 
     <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-    <table class="table table-striped mt-4">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Descripción</th>
-                <th>Código de Barras</th>
-                <th>Rubro</th>
-                <th>Grupo</th>
-                <th>Subgrupo</th>
-                <th>Depósito</th>
-                <th>Stock</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in productos %}
-            <tr>
-                <td>{{ item.id }}</td>
-                <td>{{ item.descripcion }}</td>
-                <td>{{ item.barcode }}</td>
-                <td>{{ item.rubro.descripcion|default:"-" }}</td>
-                <td>{{ item.desconcatenada.first.IDtipo1.descripcion|default:"-" }}</td>
-                <td>{{ item.desconcatenada.first.IDtipo2.descripcion|default:"-" }}</td>
-                <td>{{ item.loc_dep|default:"-" }}</td>
-                <td>{{ item.calculated_stock }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="8" class="text-center">No se encontraron resultados</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-</div>
+        <table class="table table-striped mt-4">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Descripción</th>
+                    <th>Código de Barras</th>
+                    <th>Rubro</th>
+                    <th>Grupo</th>
+                    <th>Subgrupo</th>
+                    <th>Depósito / Cantidad Total</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stock in stocks %}
+                <tr>
+                    {% if stock.total_cantidad %}
+                    <!-- Caso agrupado -->
+                    <td>{{ stock.producto__id }}</td>
+                    <td>{{ stock.producto__descripcion }}</td>
+                    <td>{{ stock.producto__barcode }}</td>
+                    <td>{{ stock.producto__rubro__descripcion|default:"-" }}</td>
+                    <td>{{ stock.producto__desconcatenada__IDtipo1__descripcion|default:"-" }}</td>
+                    <td>{{ stock.producto__desconcatenada__IDtipo2__descripcion|default:"-" }}</td>
+                    <td>Total: {{ stock.total_cantidad }}</td>
+                    <td>
+                        <a href="{% url 'producto_deposito_detail' stock.producto__id %}" class="btn btn-info btn-sm">Ver Depósitos</a>
+                    </td>
+                    {% else %}
+                    <!-- Caso detallado -->
+                    <td>{{ stock.producto.id }}</td>
+                    <td>{{ stock.producto.descripcion }}</td>
+                    <td>{{ stock.producto.barcode }}</td>
+                    <td>{{ stock.producto.rubro.descripcion|default:"-" }}</td>
+                    <td>{{ stock.producto.desconcatenada.IDtipo1.descripcion|default:"-" }}</td>
+                    <td>{{ stock.producto.desconcatenada.IDtipo2.descripcion|default:"-" }}</td>
+                    <td>{{ stock.deposito.descripcion }} - {{ stock.cantidad }}</td>
+                    <td>
+                        <a href="{% url 'producto_deposito_detail' stock.producto.id %}" class="btn btn-info btn-sm">Ver Depósitos</a>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center">No se encontraron resultados</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            
+        </table>
+    </div>
+</div>   
 {% endblock %}

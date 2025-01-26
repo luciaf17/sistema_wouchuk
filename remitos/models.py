@@ -6,7 +6,7 @@ from clientes.models import Cliente
 
 class Remito(AuditModel):
     tipo_remito = models.CharField(max_length=50, choices=[
-        #('ajuste', 'Ajuste'),
+        ('ajuste', 'Ajuste'),
         ('compra', 'Compra'),
         ('venta', 'Venta'),
         ('interdeposito', 'Interdepósito'),

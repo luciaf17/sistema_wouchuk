@@ -34,11 +34,10 @@ class Estante(models.Model):
         return self.descripcion
 
 
-# Modelo para Stock
-class Stock(AuditModel):
-    producto = models.ForeignKey('productos.Producto', on_delete=models.CASCADE)  # Producto relacionado
-    deposito = models.ForeignKey(Deposito, on_delete=models.CASCADE)  # Depósito relacionado
-    cantidad = models.PositiveIntegerField()  # Cantidad disponible
+class Stock(models.Model):
+    producto = models.ForeignKey('productos.Producto', on_delete=models.CASCADE, verbose_name="Producto")
+    deposito = models.ForeignKey(Deposito, on_delete=models.CASCADE, verbose_name="Depósito")
+    cantidad = models.PositiveIntegerField(default=0, verbose_name="Cantidad")
 
     def __str__(self):
-        return f"{self.producto} - {self.deposito} - {self.cantidad}"
+        return f"{self.producto.descripcion} - {self.deposito.descripcion} - {self.cantidad}"

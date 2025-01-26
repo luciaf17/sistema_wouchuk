@@ -4,7 +4,7 @@ from django.views.generic import ListView, CreateView, UpdateView
 from django.shortcuts import redirect, get_object_or_404
 from .models import Remito, DetalleRemito
 from clientes.models import Cliente
-from stock.models import Deposito
+from stock.models import Deposito, Stock
 from .forms import RemitoForm, DetalleRemitoForm
 from django.forms import modelformset_factory
 from django.db import transaction
@@ -145,6 +145,54 @@ def generar_pdf_remito(remito, detalles):
     return pdf_path
 
 
+def actualizar_stock(producto, deposito, cantidad, tipo_remito, deposito_origen=None):
+    """
+    Actualiza el stock de un producto en un depósito según el tipo de remito.
+    - tipo_remito: 'compra', 'venta', 'interdeposito', 'ajuste'.
+    - deposito_origen: se usa para interdeposito.
+    """
+    if tipo_remito == 'compra':
+        # Restar del depósito "Compras"
+        deposito_compras, _ = Deposito.objects.get_or_create(descripcion="Compras")
+        stock_compras, created = Stock.objects.get_or_create(producto=producto, deposito=deposito_compras)
+        stock_compras.cantidad -= cantidad
+        stock_compras.save()
+
+        # Sumar al depósito final
+        stock_destino, created = Stock.objects.get_or_create(producto=producto, deposito=deposito)
+        stock_destino.cantidad += cantidad
+        stock_destino.save()
+
+    elif tipo_remito == 'venta':
+        # Restar del depósito de origen
+        if deposito_origen:
+            stock_origen, created = Stock.objects.get_or_create(producto=producto, deposito=deposito_origen)
+            stock_origen.cantidad -= cantidad
+            stock_origen.save()
+
+        # Sumar al depósito "Ventas"
+        deposito_ventas, _ = Deposito.objects.get_or_create(descripcion="Ventas")
+        stock_ventas, created = Stock.objects.get_or_create(producto=producto, deposito=deposito_ventas)
+        stock_ventas.cantidad += cantidad
+        stock_ventas.save()
+
+    elif tipo_remito == 'interdeposito':
+        if deposito_origen:
+            # Restar del depósito de origen
+            stock_origen, created = Stock.objects.get_or_create(producto=producto, deposito=deposito_origen)
+            stock_origen.cantidad -= cantidad
+            stock_origen.save()
+
+        # Sumar al depósito de destino
+        stock_destino, created = Stock.objects.get_or_create(producto=producto, deposito=deposito)
+        stock_destino.cantidad += cantidad
+        stock_destino.save()
+
+    elif tipo_remito == 'ajuste':
+        # Ajustar al valor exacto en el depósito especificado
+        stock, created = Stock.objects.get_or_create(producto=producto, deposito=deposito)
+        stock.cantidad = cantidad
+        stock.save()
 
 
 class RemitoCreateView(CreateView):
@@ -165,35 +213,51 @@ class RemitoCreateView(CreateView):
                         producto_id = detalle.get('id')
                         dep_origen_id = detalle.get('dep_origen')
                         dep_destino_id = detalle.get('dep_destino')
-                        cantidad = detalle.get('cantidad')
+                        cantidad = int(detalle.get('cantidad'))  # Convertir a entero
                         precio_unit = detalle.get('precio_unit') or 0  # Si está vacío, asignar 0
 
-                        # Verificar campos requeridos (sin validar precio_unit como obligatorio)
+                        # Verificar campos requeridos
                         if not producto_id or not cantidad:
                             raise ValueError(f"Datos incompletos en detalle: {detalle}")
 
                         producto = Producto.objects.get(id=producto_id)
 
-                        # Asignar depósitos automáticamente según tipo de remito
-                        dep_origen = (
-                            Deposito.objects.get(id=dep_origen_id)
-                            if dep_origen_id
-                            else None
-                        )
-                        dep_destino = (
-                            Deposito.objects.get(id=dep_destino_id)
-                            if dep_destino_id
-                            else None
-                        )
+                        # Configurar depósitos según el tipo de remito
+                        dep_origen = None
+                        dep_destino = None
+                        if tipo_remito == "compra":
+                            dep_origen = Deposito.objects.get_or_create(descripcion="Compras")[0]
+                            if not dep_destino_id:
+                                raise ValueError("El depósito de destino es obligatorio para una compra.")
+                            dep_destino = Deposito.objects.get(id=dep_destino_id)
+                        elif tipo_remito == "venta":
+                            if not dep_origen_id:
+                                raise ValueError("El depósito de origen es obligatorio para una venta.")
+                            dep_origen = Deposito.objects.get(id=dep_origen_id)
+                            dep_destino = Deposito.objects.get_or_create(descripcion="Ventas")[0]
+                        elif tipo_remito == "interdeposito":
+                            if not dep_origen_id or not dep_destino_id:
+                                raise ValueError("Los depósitos de origen y destino son obligatorios para interdepósito.")
+                            dep_origen = Deposito.objects.get(id=dep_origen_id)
+                            dep_destino = Deposito.objects.get(id=dep_destino_id)
+                        elif tipo_remito == "ajuste":
+                            if not dep_destino_id:
+                                raise ValueError("El depósito de destino es obligatorio para un ajuste.")
+                            dep_destino = Deposito.objects.get(id=dep_destino_id)
 
+                        # Crear el detalle del remito
                         DetalleRemito.objects.create(
                             remito=self.object,
                             producto=producto,
                             dep_origen=dep_origen,
                             dep_destino=dep_destino,
-                            cantidad=int(cantidad),
+                            cantidad=cantidad,
                             precio_unit=decimal.Decimal(precio_unit)
                         )
+
+                        # Actualizar el stock según el tipo de remito
+                        actualizar_stock(producto, dep_destino, cantidad, tipo_remito, deposito_origen=dep_origen)
+
             except (ValueError, json.JSONDecodeError, Deposito.DoesNotExist, Producto.DoesNotExist) as e:
                 form.add_error(None, f"Error procesando detalles: {e}")
                 return self.form_invalid(form)
@@ -205,7 +269,6 @@ class RemitoCreateView(CreateView):
         # Almacenar el path del PDF para el template
         self.pdf_path = pdf_path
         return redirect(self.get_success_url())
-
 
     def get_success_url(self):
         if hasattr(self, 'pdf_path'):
@@ -220,13 +283,14 @@ class RemitoCreateView(CreateView):
 
 
 
+
 class RemitoUpdateView(UpdateView):
     model = Remito
     form_class = RemitoForm
     template_name = 'remitos/remito_form.html'
 
     def form_valid(self, form):
-        tipo_remito = form.cleaned_data.get('tipo_remito')  # Obtener el tipo de remito
+        tipo_remito = form.cleaned_data.get('tipo_remito')
         response = super().form_valid(form)
 
         detalles_json = self.request.POST.get('detalles[]')
@@ -234,20 +298,45 @@ class RemitoUpdateView(UpdateView):
             try:
                 detalles = json.loads(detalles_json)
                 with transaction.atomic():
-                    # Eliminar detalles existentes antes de agregar nuevos
-                    DetalleRemito.objects.filter(remito=self.object).delete()
+                    # 1. Revertir stock de los detalles antiguos
+                    detalles_antiguos = DetalleRemito.objects.filter(remito=self.object)
+                    for detalle_antiguo in detalles_antiguos:
+                        if tipo_remito == 'interdeposito':
+                            if detalle_antiguo.dep_origen:
+                                actualizar_stock(
+                                    detalle_antiguo.producto,
+                                    detalle_antiguo.dep_origen,
+                                    detalle_antiguo.cantidad,
+                                    'sumar'
+                                )
+                            actualizar_stock(
+                                detalle_antiguo.producto,
+                                detalle_antiguo.dep_destino,
+                                detalle_antiguo.cantidad,
+                                'restar'
+                            )
+                        else:
+                            actualizar_stock(
+                                detalle_antiguo.producto,
+                                detalle_antiguo.dep_destino,
+                                detalle_antiguo.cantidad,
+                                'restar' if tipo_remito == 'venta' else 'sumar'
+                            )
+
+                    # 2. Eliminar los detalles antiguos
+                    detalles_antiguos.delete()
+
+                    # 3. Agregar y procesar los nuevos detalles
                     for detalle in detalles:
                         producto_id = detalle.get('id')
                         dep_origen_id = detalle.get('dep_origen')
                         dep_destino_id = detalle.get('dep_destino')
-                        cantidad = detalle.get('cantidad')
-                        precio_unit = detalle.get('precio_unit') or 0  # Si está vacío, asignar 0
-
-                        # Verificar campos requeridos
-                        if not producto_id or not cantidad or not precio_unit:
-                            raise ValueError(f"Datos incompletos en detalle: {detalle}")
+                        cantidad = int(detalle.get('cantidad'))
+                        precio_unit = detalle.get('precio_unit') or 0
 
                         producto = Producto.objects.get(id=producto_id)
+                        dep_origen = Deposito.objects.get(id=dep_origen_id) if dep_origen_id else None
+                        dep_destino = Deposito.objects.get(id=dep_destino_id) if dep_destino_id else None
 
                         # Asignar depósitos automáticamente según tipo de remito
                         dep_origen = (
@@ -261,14 +350,28 @@ class RemitoUpdateView(UpdateView):
                             else Deposito.objects.get(id=dep_destino_id) if dep_destino_id else None
                         )
 
+
                         DetalleRemito.objects.create(
                             remito=self.object,
                             producto=producto,
                             dep_origen=dep_origen,
                             dep_destino=dep_destino,
-                            cantidad=int(cantidad),
+                            cantidad=cantidad,
                             precio_unit=decimal.Decimal(precio_unit)
                         )
+
+                        if tipo_remito == 'interdeposito':
+                            if not dep_origen or not dep_destino:
+                                raise ValueError("Depósito de origen y destino son obligatorios para interdepósito.")
+                            actualizar_stock(producto, dep_origen, cantidad, 'restar')
+                            actualizar_stock(producto, dep_destino, cantidad, 'sumar')
+                        else:
+                            actualizar_stock(
+                                producto,
+                                dep_destino,
+                                cantidad,
+                                'sumar' if tipo_remito == 'compra' else 'restar'
+                            )
             except (ValueError, json.JSONDecodeError, Deposito.DoesNotExist, Producto.DoesNotExist) as e:
                 form.add_error(None, f"Error procesando detalles: {e}")
                 return self.form_invalid(form)
@@ -285,6 +388,7 @@ class RemitoUpdateView(UpdateView):
         if hasattr(self, 'pdf_path'):
             return f'/static/remitos/remito_{str(self.object.id).zfill(8)}.pdf'
         return reverse_lazy('remito_list')
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -308,18 +412,52 @@ class RemitoUpdateView(UpdateView):
         return context
 
 
+def remito_activar(request, pk):
+    remito = get_object_or_404(Remito, pk=pk)
+    if remito.estado_remito == 'anulado':  # Solo activar si está anulado
+        for detalle in remito.detalleremito_set.all():
+            if remito.tipo_remito == 'venta':
+                # Restar del depósito destino
+                actualizar_stock(detalle.producto, detalle.dep_destino, detalle.cantidad, 'restar')
+            elif remito.tipo_remito == 'compra':
+                # Sumar al depósito destino
+                actualizar_stock(detalle.producto, detalle.dep_destino, detalle.cantidad, 'sumar')
+            elif remito.tipo_remito == 'interdeposito':
+                # Ejecutar el movimiento de interdepósito
+                actualizar_stock(detalle.producto, detalle.dep_origen, detalle.cantidad, 'restar')
+                actualizar_stock(detalle.producto, detalle.dep_destino, detalle.cantidad, 'sumar')
+            elif remito.tipo_remito == 'ajuste':
+                # Establecer cantidad exacta en el depósito destino
+                actualizar_stock(detalle.producto, detalle.dep_destino, detalle.cantidad, 'ajustar')
+
+        remito.estado_remito = 'activo'
+        remito.save()
+
+    return redirect('remito_list')
 
 
 
 def remito_anular(request, pk):
     remito = get_object_or_404(Remito, pk=pk)
-    remito.estado_remito = 'anulado'
-    remito.save()
+    if remito.estado_remito != 'anulado':  # Solo anular si no está ya anulado
+        for detalle in remito.detalleremito_set.all():
+            if remito.tipo_remito == 'venta':
+                # Sumar al depósito destino
+                actualizar_stock(detalle.producto, detalle.dep_destino, detalle.cantidad, 'sumar')
+            elif remito.tipo_remito == 'compra':
+                # Restar del depósito destino
+                actualizar_stock(detalle.producto, detalle.dep_destino, detalle.cantidad, 'restar')
+            elif remito.tipo_remito == 'interdeposito':
+                # Revertir el movimiento de interdepósito
+                actualizar_stock(detalle.producto, detalle.dep_origen, detalle.cantidad, 'sumar')
+                actualizar_stock(detalle.producto, detalle.dep_destino, detalle.cantidad, 'restar')
+            elif remito.tipo_remito == 'ajuste':
+                # Para ajuste, no se revierte nada
+                continue
+
+        remito.estado_remito = 'anulado'
+        remito.save()
+
     return redirect('remito_list')
 
-
-def remito_activar(request, pk):
-    remito = get_object_or_404(Remito, pk=pk)
-    remito.estado_remito = 'activo'
-    remito.save()
-    return redirect('remito_list')
+    
