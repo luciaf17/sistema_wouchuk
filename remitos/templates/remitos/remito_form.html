@@ -13,11 +13,15 @@
         </div>
 
         <div class="mb-3" id="cliente-field" style="display: none;">
-            <label for="cliente-input" class="form-label">Cliente</label>
-            <input type="text" id="cliente-input" class="form-control" placeholder="Escribe para buscar un cliente...">
+            <label for="cliente-input" class="form-label">Cliente <span class="text-danger">*</span></label>
+            <input type="text" id="cliente-input" class="form-control" placeholder="Escribe para buscar un cliente..." required>
             <ul id="cliente-results" class="list-group mt-2" style="display: none; position: absolute; z-index: 1000;"></ul>
-            <input type="hidden" id="cliente-id" name="cliente">
+            <input type="hidden" id="cliente-id" name="cliente" required>
+            <div class="invalid-feedback">
+                Debe seleccionar un cliente antes de guardar.
+            </div>
         </div>
+        
         
 
         <!-- Número de Comprobante Asociado -->
@@ -92,7 +96,6 @@
         const clienteResults = document.getElementById('cliente-results');
         const clienteIdInput = document.getElementById('cliente-id');
 
-        
 
         const columnasPorTipo = {
             ajuste: ['Depósito Destino'],
