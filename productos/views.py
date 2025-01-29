@@ -31,7 +31,7 @@ def buscar_producto(request):
                 q_filter &= models.Q(descripcion__icontains=palabra) | models.Q(barcode__icontains=palabra)
 
             # Filtra productos utilizando el filtro compuesto
-            productos = Producto.objects.filter(q_filter)[:10]  # Limitar resultados a 10 para evitar sobrecarga
+            productos = Producto.objects.filter(q_filter) # Limitar resultados a 10 para evitar sobrecarga
 
             # Incluye el `id`, `descripcion`, `barcode` y el `loc_dep` en el resultado
             resultado = [
