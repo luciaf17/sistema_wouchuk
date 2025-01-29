@@ -136,7 +136,7 @@ def generar_pdf_remito(remito, detalles):
         pdf.ln()
 
     # Guardar PDF
-    pdf_dir = "static/remitos"
+    pdf_dir = "media/remitos"
     if not os.path.exists(pdf_dir):
         os.makedirs(pdf_dir)
 
@@ -271,7 +271,7 @@ class RemitoCreateView(CreateView):
 
     def get_success_url(self):
         if hasattr(self, 'pdf_path'):
-            return f'/static/remitos/remito_{str(self.object.id).zfill(8)}.pdf'
+            return f'/media/remitos/remito_{str(self.object.id).zfill(8)}.pdf'
         return reverse_lazy('remito_list')
 
     def get_context_data(self, **kwargs):
@@ -395,7 +395,7 @@ class RemitoUpdateView(UpdateView):
 
     def get_success_url(self):
         if hasattr(self, 'pdf_path'):
-            return f'/static/remitos/remito_{str(self.object.id).zfill(8)}.pdf'
+            return f'/media/remitos/remito_{str(self.object.id).zfill(8)}.pdf'
         return reverse_lazy('remito_list')
 
     def get_context_data(self, **kwargs):
