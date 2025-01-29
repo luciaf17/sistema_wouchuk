@@ -91,7 +91,11 @@
                     <td>{{ stock.producto.desconcatenada.IDtipo2.descripcion|default:"-" }}</td>
                     <td>{{ stock.deposito.descripcion }} - {{ stock.cantidad }}</td>
                     <td>
+                        {% if stock.producto.id %}
                         <a href="{% url 'producto_deposito_detail' stock.producto.id %}" class="btn btn-info btn-sm">Ver Depósitos</a>
+                    {% else %}
+                        <span class="text-muted">Sin datos</span>
+                    {% endif %}
                     </td>
                     {% endif %}
                 </tr>
