@@ -14,14 +14,14 @@
                 <input type="date" id="fecha_desde" name="fecha_desde" class="form-control"
                        value="{{ request.GET.fecha_desde }}">
             </div>
-    
+
             <!-- Filtro por fecha hasta -->
             <div class="col-md-3">
                 <label for="fecha_hasta" class="form-label">Fecha Hasta:</label>
                 <input type="date" id="fecha_hasta" name="fecha_hasta" class="form-control"
                        value="{{ request.GET.fecha_hasta }}">
             </div>
-    
+
             <!-- Filtro por cliente -->
             <div class="col-md-3">
                 <label for="cliente" class="form-label">Cliente:</label>
@@ -34,67 +34,68 @@
                     {% endfor %}
                 </select>
             </div>
-    
+
             <!-- Filtro por tipo de remito -->
             <div class="col-md-3">
                 <label for="tipo_remito" class="form-label">Tipo de Remito:</label>
                 <select id="tipo_remito" name="tipo_remito" class="form-select">
                     <option value="">Todos</option>
-                    {% for key, value in remito_tipos.items %} <!-- Usar .items para un diccionario -->
+                    {% for key, value in remito_tipos.items %}
                     <option value="{{ key }}" {% if key == request.GET.tipo_remito %}selected{% endif %}>
                         {{ value }}
                     </option>
                     {% endfor %}
-                </select>                
+                </select>
             </div>
         </div>
 
-        <div class="col-md-3">
+        <div class="col-md-3 mt-3">
             <label for="producto" class="form-label">Producto:</label>
             <input type="text" id="producto" name="producto" class="form-control" placeholder="Buscar producto..." value="{{ request.GET.producto }}">
         </div>
-        
-    
+
         <div class="row mt-3">
             <div class="col-md-12">
                 <button type="submit" class="btn btn-primary">Filtrar</button>
                 <a href="{% url 'remito_list' %}" class="btn btn-secondary">Limpiar Filtros</a>
             </div>
         </div>
-    </form>    
+    </form>
 
     <!-- Tabla de resultados -->
     <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Fecha</th>
-                <th>Tipo</th>
-                <th>Cliente</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for remito in remitos %}
-            <tr>
-                <td>{{ remito.id }}</td>
-                <td>{{ remito.fecha|date:"d/m/Y H:i" }}</td>
-                <td>{{ remito.get_tipo_remito_display }}</td>
-                <td>{{ remito.cliente|default_if_none:"-" }}</td>
-                <td>{{ remito.get_estado_remito_display }}</td>
-                <td>
-                    <a href="{% url 'remito_detail' remito.id %}" class="btn btn-info btn-sm">Ver Detalle</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="8" class="text-center">No se encontraron remitos.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>Cliente</th>
+                    <th>Nro Comprobante</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for remito in remitos %}
+                <tr>
+                    <td>{{ remito.id }}</td>
+                    <td>{{ remito.fecha|date:"d/m/Y H:i" }}</td>
+                    <td>{{ remito.get_tipo_remito_display }}</td>
+                    <td>{{ remito.cliente|default_if_none:"-" }}</td>
+                    <td>{{ remito.nro_comprobante_asoc|default_if_none:"-" }}</td> <!-- Mostrar comprobante -->
+                    <td>{{ remito.get_estado_remito_display }}</td>
+                    <td>
+                        <a href="{% url 'remito_detail' remito.id %}" class="btn btn-info btn-sm">Ver Detalle</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">No se encontraron remitos.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
