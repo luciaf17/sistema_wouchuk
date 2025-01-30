@@ -1,5 +1,5 @@
 from django import forms
-from .models import Remito, DetalleRemito
+from .models import Remito, DetalleRemito, ConversionMoneda
 
 class RemitoForm(forms.ModelForm):
     class Meta:
@@ -27,11 +27,22 @@ class RemitoForm(forms.ModelForm):
 class DetalleRemitoForm(forms.ModelForm):
     class Meta:
         model = DetalleRemito
-        fields = ['producto', 'dep_origen', 'dep_destino', 'cantidad', 'precio_unit']
+        fields = ['producto', 'dep_origen', 'dep_destino', 'cantidad', 'moneda', 'precio_unit']
         widgets = {
             'producto': forms.Select(attrs={'class': 'form-control', 'id': 'id_producto'}),
             'dep_origen': forms.Select(attrs={'class': 'form-control', 'id': 'id_dep_origen'}),
             'dep_destino': forms.Select(attrs={'class': 'form-control', 'id': 'id_dep_destino'}),
             'cantidad': forms.NumberInput(attrs={'class': 'form-control'}),
             'precio_unit': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
+
+
+class ConversionMonedaForm(forms.ModelForm):
+    class Meta:
+        model = ConversionMoneda
+        fields = ['moneda', 'simbolo', 'conversion']
+        widgets = {
+            'moneda': forms.TextInput(attrs={'class': 'form-control'}),
+            'simbolo': forms.TextInput(attrs={'class': 'form-control'}),
+            'conversion': forms.NumberInput(attrs={'class': 'form-control'}),
         }

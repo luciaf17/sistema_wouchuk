@@ -29,7 +29,16 @@ class DetalleRemito(AuditModel):
     dep_origen = models.ForeignKey(Deposito, on_delete=models.SET_NULL, null=True, blank=True, related_name='detalles_origen')
     dep_destino = models.ForeignKey(Deposito, on_delete=models.SET_NULL, null=True, blank=True, related_name='detalles_destino')
     cantidad = models.PositiveIntegerField(verbose_name="Cantidad")
+    moneda = models.ForeignKey('ConversionMoneda', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Moneda")
     precio_unit = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Precio Unitario")
 
     def __str__(self):
         return f"{self.remito} - {self.producto} - {self.cantidad}"
+    
+class ConversionMoneda(models.Model):
+    moneda = models.CharField(max_length=50, unique=True, verbose_name="Moneda")
+    simbolo = models.CharField(max_length=10, unique=True, verbose_name="Símbolo")
+    conversion = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor de Conversión")
+
+    def __str__(self):
+        return f"{self.moneda} ({self.simbolo}) - {self.conversion}"

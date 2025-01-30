@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if object %}Editar Conversión{% else %}Nueva Conversión{% endif %}</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_moneda" class="form-label">Moneda</label>
+            {{ form.moneda }}
+        </div>
+        <div class="mb-3">
+            <label for="id_simbolo" class="form-label">Símbolo</label>
+            {{ form.simbolo }}
+        </div>
+        <div class="mb-3">
+            <label for="id_conversion" class="form-label">Valor de Conversión</label>
+            {{ form.conversion }}
+        </div>
+        <button type="submit" class="btn btn-success">Guardar</button>
+        <a href="{% url 'conversion_moneda_list' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

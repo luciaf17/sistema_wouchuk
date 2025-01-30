@@ -85,12 +85,7 @@
                 <td>{{ remito.cliente|default_if_none:"-" }}</td>
                 <td>{{ remito.get_estado_remito_display }}</td>
                 <td>
-                    <a href="{% url 'remito_update' remito.id %}" class="btn btn-warning btn-sm">Editar</a>
-                    {% if remito.estado_remito == 'activo' %}
-                    <a href="{% url 'remito_anular' remito.id %}" class="btn btn-danger btn-sm">Anular</a>
-                    {% else %}
-                    <a href="{% url 'remito_activar' remito.id %}" class="btn btn-success btn-sm">Activar</a>
-                    {% endif %}
+                    <a href="{% url 'remito_detail' remito.id %}" class="btn btn-info btn-sm">Ver Detalle</a>
                 </td>
             </tr>
             {% empty %}

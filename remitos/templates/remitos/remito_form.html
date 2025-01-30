@@ -166,11 +166,12 @@
         function actualizarEncabezados() {
             const tipoRemito = tipoRemitoField.value;
             detalleHeader.innerHTML = `
-                <tr>
+                 <tr>
                     <th>ID</th>
                     <th>Descripción</th>
                     ${columnasPorTipo[tipoRemito]?.map(columna => `<th>${columna}</th>`).join('') || ''}
                     <th>Cantidad</th>
+                    <th>Moneda</th>
                     <th>Precio Unitario</th>
                     <th>Acciones</th>
                 </tr>
@@ -211,6 +212,15 @@
                 </td>
             ` : ''}
             <td><input type="number" name="cantidad" class="form-control" step="1" min="1" value="${detalle.cantidad}"></td>
+            <td>
+                <select name="moneda" class="form-control">
+                    ${conversiones.map(conversion => `
+                        <option value="${conversion.id}" ${detalle.moneda__id == conversion.id ? 'selected' : ''}>
+                            ${conversion.simbolo}
+                        </option>
+                    `).join('')}
+                </select>
+            </td>
             <td>
                 <div class="input-group">
                     <span class="input-group-text">$</span>
@@ -318,6 +328,15 @@
             ` : ''}
             <td><input type="number" name="cantidad" class="form-control" step="1" min="1"></td>
             <td>
+                <select name="moneda" class="form-control">
+                    {% for conversion in conversiones %}
+                        <option value="{{ conversion.id }}" {% if detalle.moneda and detalle.moneda.id == conversion.id %}selected{% endif %}>
+                            {{ conversion.simbolo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
                 <div class="input-group">
                     <span class="input-group-text">$</span>
                     <input type="number" name="precio_unit" class="form-control" step="0.01" min="0">
@@ -352,8 +371,10 @@
                 const depDestino = row.querySelector('[name="dep_destino"]')?.value || null;
                 const cantidad = row.querySelector('[name="cantidad"]').value;
                 const precioUnit = row.querySelector('[name="precio_unit"]')?.value || 0;;
+                const moneda = row.querySelector('[name="moneda"]').value;
 
-                detalles.push({ id, dep_origen: depOrigen, dep_destino: depDestino, cantidad, precio_unit: precioUnit });
+
+                detalles.push({ id, dep_origen: depOrigen, dep_destino: depDestino, cantidad, moneda, precio_unit: precioUnit });
             });
 
             const detallesInput = document.createElement('input');

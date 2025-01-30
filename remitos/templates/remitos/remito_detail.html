@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Detalle del Remito</h2>
+
+    <div class="mb-3">
+        <label class="form-label">Tipo de Remito</label>
+        <p>{{ object.get_tipo_remito_display }}</p>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Cliente</label>
+        <p>{{ object.cliente.descripcion|default:"-" }}</p>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Nro Comprobante Asociado</label>
+        <p>{{ object.nro_comprobante_asoc|default:"-" }}</p>
+    </div>
+
+    <h3>Detalles del Remito</h3>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Descripción</th>
+                <th>Depósito Origen</th>
+                <th>Depósito Destino</th>
+                <th>Cantidad</th>
+                <th>Moneda</th>
+                <th>Precio Unitario</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detalle in object.detalleremito_set.all %}
+            <tr>
+                <td>{{ detalle.producto.id }}</td>
+                <td>{{ detalle.producto.descripcion }}</td>
+                <td>{{ detalle.dep_origen.descripcion|default:"-" }}</td>
+                <td>{{ detalle.dep_destino.descripcion|default:"-" }}</td>
+                <td>{{ detalle.cantidad }}</td>
+                <td>{{ detalle.moneda.simbolo|default:"-" }}</td>
+                <td>{{ detalle.precio_unit }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{% url 'remito_list' %}" class="btn btn-secondary">Volver</a>
+</div>
+{% endblock %}

@@ -1,11 +1,11 @@
 import decimal
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.shortcuts import redirect, get_object_or_404
-from .models import Remito, DetalleRemito
+from .models import Remito, DetalleRemito, ConversionMoneda
 from clientes.models import Cliente
 from stock.models import Deposito, Stock
-from .forms import RemitoForm, DetalleRemitoForm
+from .forms import RemitoForm, DetalleRemitoForm, ConversionMonedaForm
 from django.forms import modelformset_factory
 from django.db import transaction
 from productos.models import Producto
@@ -99,8 +99,8 @@ def generar_pdf_remito(remito, detalles):
     pdf.cell(200, 10, f"Tipo: {remito.get_tipo_remito_display()}", ln=True, align="L")
 
     # Mostrar fantasía del cliente si existe
-    cliente_fantasia = remito.cliente.fantasia if remito.cliente and remito.cliente.fantasia else "-"
-    pdf.cell(200, 10, f"Cliente: {cliente_fantasia}", ln=True, align="L")
+    cliente_descripcion = remito.cliente.descripcion if remito.cliente and remito.cliente.descripcion else "-"
+    pdf.cell(200, 10, f"Cliente: {cliente_descripcion}", ln=True, align="L")
 
     # Verificar si hay número de comprobante asociado
     if remito.nro_comprobante_asoc:
@@ -118,7 +118,7 @@ def generar_pdf_remito(remito, detalles):
     pdf.cell(20, 10, "Cantidad", border=1, align="C", fill=True)
     pdf.cell(10, 10, "D.O", border=1, align="C", fill=True)
     pdf.cell(10, 10, "D.D", border=1, align="C", fill=True)
-    pdf.cell(20, 10, "Precio Unit.", border=1, align="C", fill=True)
+    pdf.cell(20, 10, "Precio Unit.", border=1, align="C", fill=True)  # Aumentar el ancho para incluir moneda
     pdf.ln()
 
     # Filas
@@ -132,7 +132,14 @@ def generar_pdf_remito(remito, detalles):
         pdf.cell(20, 10, str(detalle.cantidad), border=1, align="C")  # Cantidad
         pdf.cell(10, 10, detalle.dep_origen.descripcion if detalle.dep_origen else "-", border=1, align="C")  # Depósito Origen
         pdf.cell(10, 10, detalle.dep_destino.descripcion if detalle.dep_destino else "-", border=1, align="C")  # Depósito Destino
-        pdf.cell(20, 10, f"${detalle.precio_unit:.2f}", border=1, align="R")  # Precio Unitario
+
+        # Precio unitario con símbolo de moneda
+        if detalle.moneda:
+            moneda_simbolo = detalle.moneda.simbolo
+        else:
+            moneda_simbolo = "-"  # Fallback si no hay moneda asociada
+
+        pdf.cell(20, 10, f"{moneda_simbolo} {detalle.precio_unit:.2f}", border=1, align="R")  # Precio con símbolo
         pdf.ln()
 
     # Guardar PDF
@@ -213,13 +220,15 @@ class RemitoCreateView(CreateView):
                         dep_origen_id = detalle.get('dep_origen')
                         dep_destino_id = detalle.get('dep_destino')
                         cantidad = int(detalle.get('cantidad'))  # Convertir a entero
+                        moneda_id = detalle.get('moneda')  # Obtener la moneda seleccionada
                         precio_unit = detalle.get('precio_unit') or 0  # Si está vacío, asignar 0
 
                         # Verificar campos requeridos
-                        if not producto_id or not cantidad:
+                        if not producto_id or not cantidad or not moneda_id:
                             raise ValueError(f"Datos incompletos en detalle: {detalle}")
 
                         producto = Producto.objects.get(id=producto_id)
+                        moneda = ConversionMoneda.objects.get(id=moneda_id)
 
                         # Configurar depósitos según el tipo de remito
                         dep_origen = None
@@ -251,13 +260,14 @@ class RemitoCreateView(CreateView):
                             dep_origen=dep_origen,
                             dep_destino=dep_destino,
                             cantidad=cantidad,
+                            moneda=moneda,
                             precio_unit=decimal.Decimal(precio_unit)
                         )
 
                         # Actualizar el stock según el tipo de remito
                         actualizar_stock(producto, dep_destino, cantidad, tipo_remito, deposito_origen=dep_origen)
 
-            except (ValueError, json.JSONDecodeError, Deposito.DoesNotExist, Producto.DoesNotExist) as e:
+            except (ValueError, json.JSONDecodeError, Deposito.DoesNotExist, Producto.DoesNotExist, ConversionMoneda.DoesNotExist) as e:
                 form.add_error(None, f"Error procesando detalles: {e}")
                 return self.form_invalid(form)
 
@@ -276,6 +286,7 @@ class RemitoCreateView(CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['conversiones'] = ConversionMoneda.objects.all()  # Pasar las monedas al contexto
         context['depositos'] = json.dumps(list(Deposito.objects.values('id', 'descripcion')), default=str)
         context['detalle_remito'] = json.dumps([], default=str)  # Siempre enviar una lista vacía
         return context
@@ -321,24 +332,19 @@ class RemitoUpdateView(UpdateView):
 
         for detalle in detalles_antiguos:
             if tipo_remito == 'compra':
-                # Revertir compra: restar al destino
                 actualizar_stock(detalle.producto, detalle.dep_destino, -detalle.cantidad, 'compra', deposito_origen=None)
             elif tipo_remito == 'venta':
-                # Revertir venta: devolver al origen y restar de "Ventas"
                 actualizar_stock(detalle.producto, detalle.dep_origen, detalle.cantidad, 'venta', deposito_origen=None)
                 deposito_ventas, _ = Deposito.objects.get_or_create(descripcion="Ventas")
                 actualizar_stock(detalle.producto, deposito_ventas, -detalle.cantidad, 'venta', deposito_origen=None)
             elif tipo_remito == 'interdeposito':
-                # Revertir interdepósito
                 actualizar_stock(detalle.producto, detalle.dep_destino, -detalle.cantidad, 'interdeposito', deposito_origen=detalle.dep_origen)
                 actualizar_stock(detalle.producto, detalle.dep_origen, detalle.cantidad, 'interdeposito', deposito_origen=detalle.dep_origen)
             elif tipo_remito == 'ajuste':
-                # Ajustes no requieren revertir
                 continue
 
         # Eliminar los detalles antiguos
         detalles_antiguos.delete()
-
 
     def procesar_nuevos_detalles(self, detalles, tipo_remito):
         """
@@ -348,10 +354,12 @@ class RemitoUpdateView(UpdateView):
             producto_id = detalle.get('id')
             dep_origen_id = detalle.get('dep_origen')
             dep_destino_id = detalle.get('dep_destino')
+            moneda_id = detalle.get('moneda')  # Obtener la moneda
             cantidad = int(detalle.get('cantidad'))
             precio_unit = detalle.get('precio_unit') or 0
 
             producto = Producto.objects.get(id=producto_id)
+            moneda = ConversionMoneda.objects.get(id=moneda_id) if moneda_id else None
             dep_origen = None
             dep_destino = None
 
@@ -384,6 +392,7 @@ class RemitoUpdateView(UpdateView):
                 dep_destino=dep_destino,
                 defaults={
                     'cantidad': cantidad,
+                    'moneda': moneda,  # Guardar la moneda seleccionada
                     'precio_unit': decimal.Decimal(precio_unit),
                 }
             )
@@ -392,7 +401,6 @@ class RemitoUpdateView(UpdateView):
             if created or detalle_obj.cantidad != cantidad:
                 actualizar_stock(producto, dep_destino, cantidad, tipo_remito, deposito_origen=dep_origen)
 
-
     def get_success_url(self):
         if hasattr(self, 'pdf_path'):
             return f'/media/remitos/remito_{str(self.object.id).zfill(8)}.pdf'
@@ -400,14 +408,15 @@ class RemitoUpdateView(UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['conversiones'] = json.dumps(list(ConversionMoneda.objects.values('id', 'simbolo')), default=str)
         context['depositos'] = json.dumps(list(Deposito.objects.values('id', 'descripcion')), default=str)
         context['detalle_remito'] = json.dumps(list(
             DetalleRemito.objects.filter(remito=self.object).values(
-                'producto__id', 'producto__descripcion', 'dep_origen__id', 'dep_destino__id', 'cantidad', 'precio_unit'
+                'producto__id', 'producto__descripcion', 'dep_origen__id', 'dep_destino__id', 
+                'cantidad', 'moneda__id', 'precio_unit'  # Coma corregida aquí
             )
         ), default=str)
 
-        # Obtener cliente relacionado
         if self.object.cliente:
             context['cliente_data'] = {
                 'id': self.object.cliente.id,
@@ -418,6 +427,7 @@ class RemitoUpdateView(UpdateView):
             context['cliente_data'] = None
 
         return context
+
 
 
 def remito_activar(request, pk):
@@ -471,8 +481,55 @@ def remito_anular(request, pk):
 
     return redirect('remito_list')
 
+class RemitoDetailView(DetailView):
+    model = Remito
+    template_name = 'remitos/remito_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['conversiones'] = ConversionMoneda.objects.all()
+        context['depositos'] = json.dumps(list(Deposito.objects.values('id', 'descripcion')), default=str)
+        context['detalle_remito'] = json.dumps(list(
+            DetalleRemito.objects.filter(remito=self.object).values(
+                'producto__id', 'producto__descripcion', 'dep_origen__id', 
+                'dep_destino__id', 'cantidad', 'moneda__id', 'precio_unit'
+            )
+        ), default=str)
+        return context
 
 
+
+# Listar conversiones
+class ConversionMonedaListView(ListView):
+    model = ConversionMoneda
+    template_name = 'remitos/conversion_moneda_list.html'
+    context_object_name = 'conversiones'
+
+# Crear nueva conversión
+class ConversionMonedaCreateView(CreateView):
+    model = ConversionMoneda
+    form_class = ConversionMonedaForm
+    template_name = 'remitos/conversion_moneda_form.html'
+    success_url = reverse_lazy('conversion_moneda_list')
+
+# Editar una conversión
+class ConversionMonedaUpdateView(UpdateView):
+    model = ConversionMoneda
+    form_class = ConversionMonedaForm
+    template_name = 'remitos/conversion_moneda_form.html'
+    success_url = reverse_lazy('conversion_moneda_list')
+
+# Eliminar una conversión
+class ConversionMonedaDeleteView(DeleteView):
+    model = ConversionMoneda
+    template_name = 'confirm_delete.html'  # Puedes usar un template genérico de confirmación
+    success_url = reverse_lazy('conversion_moneda_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['object_name'] = 'Conversión de Moneda'
+        context['cancel_url'] = reverse_lazy('conversion_moneda_list')  # URL para el botón "Cancelar"
+        return context
 
 
 

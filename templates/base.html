@@ -17,7 +17,23 @@
             <ul class="nav flex-column w-100">
                 <!-- Inicio -->
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="#">Inicio</a>
+                    <a class="nav-link text-white {% if 'inicio' in request.path %}active{% endif %}" 
+                       data-bs-toggle="collapse" 
+                       data-bs-target="#inicioSubmenu" 
+                       role="button" 
+                       aria-expanded="{% if 'inicio' in request.path %}true{% else %}false{% endif %}">
+                        Inicio
+                    </a>
+                    <div class="collapse {% if 'inicio' in request.path %}show{% endif %}" id="inicioSubmenu">
+                        <ul class="nav flex-column ps-3">
+                            <li>
+                                <a class="nav-link text-white {% if 'conversion_moneda_list' in request.path %}active{% endif %}" 
+                                   href="{% url 'conversion_moneda_list' %}">
+                                    Conversión de Moneda
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
         
                 <!-- Clientes -->
